@@ -1,0 +1,82 @@
+#include <iostream>
+#include <queue>
+#include <stack>
+
+using std::cin;
+using std::cout;
+using std::stack;
+using std::queue;
+
+struct   QueueWithPushMiddle {
+    queue<int> first;
+    stack<int> middle, last;
+    int midlastsize = 0;
+    
+    QueueWithPushMiddle {
+    }
+    
+    ~QueueWithPushMiddle {
+    }
+
+    push_back(int x) {
+        last.push(x);
+        ++midlastsize;
+    }
+
+    void move_middle() {
+        if(middle.empty()) {
+            while(!last.empty()) {
+                middle.push(last.top());
+                last.pop();
+            }
+        }
+        int x = middle.top();
+        middle.pop();
+        --midlastsize;
+        first.push(x);
+    }
+
+    push_middle(int x) {
+        while(first.size() < midlastsize) {
+                move_middle();
+            }
+        middle.push(x);
+        ++midlastsize;
+   }
+
+    int pop_first() {
+        if(first.size() == 0) move_middle();
+        int firstnum = first.front();
+        first.pop();
+        return firstnum;
+    }
+};
+
+
+int main()
+{
+    int N;
+    cin >> N;
+    queue<int> first;
+    QueueWithPushMiddle newqueque;
+
+    for( int i = 0; i < N; ++i){
+        char ch;
+        cin >> ch;
+        if(ch == '+'){
+            int x;
+            cin >> x;
+            newqueque.push_back(x);
+        }
+
+        if(ch == '*'){
+            int x;
+            cin >> x;
+            newqueque.push_middle(x);
+        }
+
+        if(ch == '-') {
+            cout << newqueque.pop_first() << "\n";
+        }
+    }
+}
