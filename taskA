@@ -9,13 +9,16 @@ struct Stack {
     std::vector<int> N;
     int size = 0;
 
+
     int getsize() {
         return N.size();
     }
 
+
     push(int x) {
         N.push_back(x);
     }
+
 
     int pop() {
         int lastN = *(N.end()-1);
@@ -23,16 +26,25 @@ struct Stack {
         return lastN;
     }
 
+
     int back() {
         return *(N.end()-1);
     }
+
 
     clearall() {
         while (0 < N.size()) this -> pop();
     }
 
+
     bool empty(){
         return (this -> N.size() == 0 ? true : false);
+    }
+
+    Stack() {
+    }
+
+    ~Stack() {
     }
 };
 
