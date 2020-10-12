@@ -9,7 +9,12 @@ struct Stack {
     std::vector<int> N;
     int size = 0;
 
+    Stack() {
+    }
 
+    ~Stack() {
+    }
+    
     int getsize() {
         return N.size();
     }
@@ -39,12 +44,6 @@ struct Stack {
 
     bool empty(){
         return (this -> N.size() == 0 ? true : false);
-    }
-
-    Stack() {
-    }
-
-    ~Stack() {
     }
 };
 
