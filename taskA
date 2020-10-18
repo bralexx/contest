@@ -4,52 +4,73 @@
 using std::cout;
 using std::string;
 using std::cin;
-
+template<class T>
 struct Stack {
-    std::vector<int> N;
+    T* N = new T[1];
     int size = 0;
+    int allsize = 1;
 
     Stack() {
     }
 
     ~Stack() {
     }
-    
+
     int getsize() {
-        return N.size();
+        return size;
+    }
+
+    push(T x) {
+        if(allsize == size){
+            T* NN = new T[allsize * 2];
+            for(int i = 0; i < size; ++i) {
+                NN[i] = N[i];
+            }
+            delete[] N;
+            N = NN;
+        allsize *= 2;
+        }
+        N[size] = x;
+        ++size;
     }
 
 
-    push(int x) {
-        N.push_back(x);
-    }
-
-
-    int pop() {
-        int lastN = *(N.end()-1);
-        N.resize(N.size()-1);
+    T pop() {
+        T lastN = N[size-1];
+        if(allsize/4 > size) {
+            T* NN = new T[allsize/2];
+            for(int i = 0; i < size; ++i){
+                NN[i] = N[i];
+            }
+            delete[] N;
+            N = NN;
+        allsize /= 2;
+        }
+        --size;
         return lastN;
     }
 
 
-    int back() {
-        return *(N.end()-1);
+    T back()const {
+        return N[size-1];
     }
 
 
     clearall() {
-        while (0 < N.size()) this -> pop();
+        N = new T[1];
+        allsize = 1;
+        size = 0;
     }
 
 
-    bool empty(){
-        return (this -> N.size() == 0 ? true : false);
+    bool empty() {
+        return (size == 0 ? true : false);
     }
 };
 
 
 int main() {
-    Stack st;
+    Stack<int> st;
     string in;
     do {
         cin >> in;
