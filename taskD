@@ -11,14 +11,14 @@ struct   QueueWithPushMiddle {
     queue<int> first;
     stack<int> middle, last;
     int midlastsize = 0;
-    
-    QueueWithPushMiddle {
-    }
-    
-    ~QueueWithPushMiddle {
+
+    QueueWithPushMiddle() {
     }
 
-    push_back(int x) {
+    ~QueueWithPushMiddle() {
+    }
+
+    push_back(const int& x) {
         last.push(x);
         ++midlastsize;
     }
@@ -36,7 +36,7 @@ struct   QueueWithPushMiddle {
         first.push(x);
     }
 
-    push_middle(int x) {
+    push_middle(const int& x) {
         while(first.size() < midlastsize) {
                 move_middle();
             }
