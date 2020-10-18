@@ -16,11 +16,11 @@ struct Stack {
     ~Stack() {
     }
 
-    int getsize() {
+    int getsize()const {
         return size;
     }
 
-    push(T x) {
+    push(const T& x) {
         if(allsize == size){
             T* NN = new T[allsize * 2];
             for(int i = 0; i < size; ++i) {
@@ -63,7 +63,7 @@ struct Stack {
     }
 
 
-    bool empty() {
+    bool empty()const {
         return (size == 0 ? true : false);
     }
 };
