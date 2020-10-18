@@ -12,7 +12,7 @@ int NumberOfInvertions(int* left, int* right) {
         int* newA = new int[right - left + 1];
         inversions += NumberOfInvertions( left, av);
         inversions += NumberOfInvertions( av+1, right);
-        
+
         while(i != av + 1 && j != right + 1) {
             if(*i > *j) {
                     newA[i - left + j - av - 1] = *j;
