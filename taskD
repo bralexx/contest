@@ -1,0 +1,145 @@
+#include <iostream>
+#include <vector>
+
+using std::cin;
+using std::cout;
+
+template<class T>
+struct pair {
+    T value;
+    long long id;
+};
+
+template<class T>
+const bool compLess(T t1, T t2) {
+    return t1 < t2;
+}
+
+template<class T>
+class Heap {
+    std::vector<long long> indices;
+    std::vector<pair<T>> num;
+    const bool (*comp)(T&, T&);
+
+
+    void swapWithId(long long& index1, const long long& index2){
+        std::swap(num[index1], num[index2]);
+        indices[num[index1].id] = index1;
+        indices[num[index2].id] = index2;
+        index1 = index2;
+    }
+
+    void siftUp(long long& index) {
+        while(index > 0 && comp(num[index].value, num[(index - 1) / 2].value)) {
+            swapWithId(index, (index-1) / 2);
+        }
+    }
+
+    void siftDown(long long& index) {
+        while((index * 2) + 2 < num.size() && (comp(num[(index * 2) + 1].value, num[index].value) || comp(num[(index * 2) + 2].value, num[index].value))) {
+            if(comp(num[(index * 2) + 1].value, num[(index * 2) + 2].value)) {
+                swapWithId(index, (index * 2) + 1);
+            }else{
+                swapWithId(index, (index * 2) + 2);
+            }
+        }
+        if((index * 2) + 1 < num.size() && comp(num[(index * 2) + 1].value, num[index].value)){
+            swapWithId(index, (index * 2) + 1);
+        }
+    }
+public:
+    Heap(const long long& n, const bool (*comp)(T&, T&)){indices.resize(n); this->comp = comp;}
+
+    void insert(const T& x, long long& i) {
+        indices[i] = num.size();
+        num.push_back({x, i});
+        siftUp(indices[i]);
+    }
+
+    long long getKey() const {
+        return num[0].id;
+    }
+
+    T getTop() const {
+        return num[0].value;
+    }
+
+    void extractTop() {
+        if (num.size() == 0) return ;
+        long long x = 0;
+        swapWithId(x, num.size() - 1);
+        num.pop_back();
+        long long null = 0;
+        siftDown(null);
+    }
+
+    void extractKey(long long i) {
+        if (num.size() == 0) return ;
+        long long x = indices[i];
+        swapWithId(x, num.size() - 1);
+        num.pop_back();
+        siftDown(x);
+    }
+    void decreaseKey(const long long& i, const T& d) {
+        num[indices[i]].value -= d;
+        siftUp(indices[i]);
+        siftDown(indices[i]);
+        siftDown(indices[i]);
+    }
+};
+
+int main()
+{
+    std::ios_base :: sync_with_stdio(0);
+    cin.tie();
+    cout.tie();
+    long long q, id, x, X, ID;
+    cin >> q;
+    cin.get();
+    Heap<long long> heap(q, &compLess);
+    for(long long i = 0; i < q; ++i){
+        char c;
+        c = cin.get();
+        if(c == 'i'){
+            cin.ignore(6);
+            cin >> x;
+            cin.ignore(20, '\n');
+            heap.insert(x, i);
+        } else if(c == 'g') {
+            cin.ignore(20, '\n');
+            cout << heap.getTop() << '\n';
+        } else if(c == 'e') {
+            cin.ignore(20, '\n');
+            heap.extractTop();
+        } else if(c == 'd') {
+            cin.ignore(11);
+            id = 0;
+            c = cin.get();
+            ID = 1;
+            if (c == '-') {
+                ID = -1;
+                c = cin.get();
+            }
+            do {
+                id *= 10;
+                id += c - '0';
+                c = cin.get();
+            } while (c != ' ');
+            x = 0;
+            c = cin.get();
+            X = 1;
+            if (c == '-') {
+                X = -1;
+                c = cin.get();
+            }
+            do {
+                x *= 10;
+                x += c - '0';
+                c = cin.get();
+            } while (c != '\n');
+            id *= ID;
+            x *= X;
+            heap.decreaseKey(id-1, x);
+        }
+    }
+}
