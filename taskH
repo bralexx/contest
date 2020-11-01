@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+using std::vector;
+
+void LSD(vector<uint64_t>& num) {
+    for(int j = 0; j<8; ++j) {
+        vector<int> bytes(257, 0);
+        for (auto t : num) {
+            ++bytes[((t >> (8 * j)) & 255) + 1];
+        }
+        for (int i = 0; i < 256; ++i) {
+            bytes[i + 1] += bytes[i];
+        }
+        vector<uint64_t> num2(num.size());
+        for (auto t : num) {
+            num2[bytes[(t >> (8 * j)) & 255]++] = t;
+        }
+        num = num2;
+    }
+}
+
+int main()
+{
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::cout.tie();
+    int n;
+    std::cin >> n;
+    uint64_t x;
+    vector<uint64_t> num;
+    for(int i=0; i < n; ++i){
+        std::cin >> x;
+        num.push_back(x);
+    }
+    LSD(num);
+    for(auto& t : num){
+        std::cout << t << " ";
+    }
+    return 0;
+}
