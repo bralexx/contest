@@ -1,70 +1,55 @@
 #include <iostream>
-#include <vector>
 
 using std::cout;
 using std::string;
 using std::cin;
+
+template<class T>
+struct ElementOfStack {
+    T value;
+    ElementOfStack* prev;
+};
+
 template<class T>
 struct Stack {
-    T* N = new T[1];
+    ElementOfStack<T> top;
     int size = 0;
-    int allsize = 1;
 
-    Stack() {
-    }
-
-    ~Stack() {
-    }
+    Stack(){}
+    Stack(const Stack&) = delete;
+    bool operator= (const Stack&) = delete;
+    ~Stack(){}
 
     int getsize()const {
         return size;
     }
 
-    push(const T& x) {
-        if(allsize == size){
-            T* NN = new T[allsize * 2];
-            for(int i = 0; i < size; ++i) {
-                NN[i] = N[i];
-            }
-            delete[] N;
-            N = NN;
-        allsize *= 2;
-        }
-        N[size] = x;
+    void push(T& x) {
+        ElementOfStack<T>* other = new ElementOfStack<T>;
+        *other = top;
+        top = {x, other};
         ++size;
     }
 
-
     T pop() {
-        T lastN = N[size-1];
-        if(allsize/4 > size) {
-            T* NN = new T[allsize/2];
-            for(int i = 0; i < size; ++i){
-                NN[i] = N[i];
-            }
-            delete[] N;
-            N = NN;
-        allsize /= 2;
-        }
+        T lastVal = top.value;
+        ElementOfStack<T>* prev = top.prev;
+        top = *top.prev;
+        delete prev;
         --size;
-        return lastN;
+        return lastVal;
     }
 
-
-    T back()const {
-        return N[size-1];
+    int back()const {
+        return top.value;
     }
 
-
-    clearall() {
-        N = new T[1];
-        allsize = 1;
-        size = 0;
+    void clear() {
+        while (0 < size) pop();
     }
 
-
-    bool empty()const {
-        return (size == 0 ? true : false);
+    bool empty() {
+        return size == 0;
     }
 };
 
@@ -99,13 +84,13 @@ int main() {
         }
 
         if( in == "size" ) {
-                cout << st.getsize() << "\n";
+            cout << st.getsize() << "\n";
         }
 
         if(in == "clear") {
-                st.clearall();
-                cout << "ok\n";
-            }
+            st.clear();
+            cout << "ok\n";
+        }
     }while(in != "exit");
     cout << "bye";
 }
