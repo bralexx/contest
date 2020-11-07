@@ -1,3 +1,18 @@
+/*Гоблины Мглистых гор очень любях ходить к своим шаманам. Так как гоблинов много, к шаманам часто образуются очень длинные очереди. А поскольку много гоблинов в одном месте быстро образуют шумную толку, которая мешает шаманам проводить сложные медицинские манипуляции, последние решили установить некоторые правила касательно порядка в очереди.
+
+Обычные гоблины при посещении шаманов должны вставать в конец очереди. Привилегированные же гоблины, знающие особый пароль, встают ровно в ее середину, причем при нечетной длине очереди они встают сразу за центром.
+
+Так как гоблины также широко известны своим непочтительным отношением ко всяческим правилам и законам, шаманы попросили вас написать программу, которая бы отслеживала порядок гоблинов в очереди.
+
+Входные данные
+В первой строке входных данный записано число N (1≤N≤105)  − количество запросов. Следующие N строк содержат описание запросов в формате:
+
++ i  − гоблин с номером i (1≤i≤N) встаёт в конец очереди.
+* i  − привилегированный гоблин с номером i встает в середину очереди.
+-  − первый гоблин из очереди уходит к шаманам. Гарантируется, что на момент такого запроса очередь не пуста.
+Выходные данные
+Для каждого запроса типа - программа должна вывести номер гоблина, который должен зайти к шаманам.*/
+
 #include <iostream>
 #include <queue>
 #include <stack>
@@ -7,48 +22,45 @@ using std::cout;
 using std::stack;
 using std::queue;
 
-struct   QueueWithPushMiddle {
-    queue<int> first;
-    stack<int> middle, last;
-    int midlastsize = 0;
+class   QueueWithPushMiddle {
+    queue<int> first_half;
+    stack<int> begin_of_2nd_half, last_elements;
 
+    void move_from_2nd_to_1st_half() {
+        if(begin_of_2nd_half.empty()) {
+            while(!last_elements.empty()) {
+                begin_of_2nd_half.push(last_elements.top());
+                last_elements.pop();
+            }
+        }
+        first_half.push(begin_of_2nd_half.top());
+        begin_of_2nd_half.pop();
+    }
+
+public:
     QueueWithPushMiddle() {
     }
 
     ~QueueWithPushMiddle() {
     }
 
-    push_back(const int& x) {
-        last.push(x);
-        ++midlastsize;
+    void push_back(const int& x) {
+        last_elements.push(x);
     }
 
-    void move_middle() {
-        if(middle.empty()) {
-            while(!last.empty()) {
-                middle.push(last.top());
-                last.pop();
-            }
-        }
-        int x = middle.top();
-        middle.pop();
-        --midlastsize;
-        first.push(x);
-    }
 
-    push_middle(const int& x) {
-        while(first.size() < midlastsize) {
-                move_middle();
+    void push_middle(const int& x) {
+        while(first_half.size() < (begin_of_2nd_half.size() + last_elements.size())) {
+                move_from_2nd_to_1st_half();
             }
-        middle.push(x);
-        ++midlastsize;
+        begin_of_2nd_half.push(x);
    }
 
     int pop_first() {
-        if(first.size() == 0) move_middle();
-        int firstnum = first.front();
-        first.pop();
-        return firstnum;
+        if(first_half.size() == 0) move_from_2nd_to_1st_half();
+        int x = first_half.front();
+        first_half.pop();
+        return x;
     }
 };
 
@@ -57,8 +69,7 @@ int main()
 {
     int N;
     cin >> N;
-    queue<int> first;
-    QueueWithPushMiddle newqueque;
+    QueueWithPushMiddle queue_wpm;
 
     for( int i = 0; i < N; ++i){
         char ch;
@@ -66,17 +77,17 @@ int main()
         if(ch == '+'){
             int x;
             cin >> x;
-            newqueque.push_back(x);
+            queue_wpm.push_back(x);
         }
 
         if(ch == '*'){
             int x;
             cin >> x;
-            newqueque.push_middle(x);
+            queue_wpm.push_middle(x);
         }
 
         if(ch == '-') {
-            cout << newqueque.pop_first() << "\n";
+            cout << queue_wpm.pop_first() << "\n";
         }
     }
 }
