@@ -4,16 +4,18 @@ using std::vector;
 
 void LSD(vector<uint64_t>& num) {
     for(int j = 0; j<8; ++j) {
-        vector<int> bytes(257, 0);
+        vector<int> bytes(256, 0);
         for (auto t : num) {
-            ++bytes[((t >> (8 * j)) & 255) + 1];
+            ++bytes[(t >> (8 * j)) & 255];
         }
-        for (int i = 0; i < 256; ++i) {
-            bytes[i + 1] += bytes[i];
+        for (int i = 0; i < 255; ++i) {
+            bytes[i+1] += bytes[i];
         }
         vector<uint64_t> num2(num.size());
-        for (auto t : num) {
-            num2[bytes[(t >> (8 * j)) & 255]++] = t;
+        uint64_t t;
+        for (int i = num.size() - 1; i >= 0 ; --i) {
+            t = num[i];
+            num2[--bytes[( t >> (8 * j)) & 255] ] = t;
         }
         num = num2;
     }
