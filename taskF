@@ -3,36 +3,41 @@
 using std::cout;
 using std::cin;
 
-int NumberOfInvertions(int* left, int* right) {
+const bool comp_int(int& t1, int& t2) {
+    return t1 < t2;
+}
+
+template<class T>
+int NumberOfInvertions(T* left, T* right, const bool (*comp)(T&, T&)) {
     if(left != right) {
         int inversions = 0;
         int* av = left + (right - left) / 2;
         int* i = left;
         int* j = av+1;
         int* newA = new int[right - left + 1];
-        inversions += NumberOfInvertions( left, av);
-        inversions += NumberOfInvertions( av+1, right);
+        inversions += NumberOfInvertions( left, av, comp);
+        inversions += NumberOfInvertions( av+1, right, comp);
 
         while(i != av + 1 && j != right + 1) {
-            if(*i > *j) {
-                    newA[i - left + j - av - 1] = *j;
-                    ++j;
-                    inversions += av - i + 1;
+            if(comp(*j, *i)) {
+                newA[i - left + j - av - 1] = *j;
+                ++j;
+                inversions += av - i + 1;
             }else{
-                    newA[i - left + j - av - 1] = *i;
-                    ++i;
+                newA[i - left + j - av - 1] = *i;
+                ++i;
             }
         }
-                while( j != right + 1) {
-                    newA[i - left + j - av - 1] = *j;
-                    ++j;
-                }
-                while( i != av + 1) {
-                    newA[i - left + j - av - 1] = *i;
-                    ++i;
-                }
-            for(i = left; i != right + 1; ++i)*i = newA[i - left];
-            return inversions;
+        while( j != right + 1) {
+            newA[i - left + j - av - 1] = *j;
+            ++j;
+        }
+        while( i != av + 1) {
+            newA[i - left + j - av - 1] = *i;
+            ++i;
+        }
+        for(i = left; i != right + 1; ++i)*i = newA[i - left];
+        return inversions;
     }else{
         return 0;
     }
@@ -40,13 +45,14 @@ int NumberOfInvertions(int* left, int* right) {
 
 int main()
 {
-    freopen("inverse.in", "r", stdin);
-    freopen("inverse.out", "w", stdout);
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
     int n;
     cin >> n;
     int numbers[100000];
     for( int i=0; i < n; ++i){
-            cin >> numbers[i];
+        cin >> numbers[i];
     }
-    cout << NumberOfInvertions(numbers, numbers + n - 1);
+
+    cout << NumberOfInvertions(numbers, numbers + n - 1, comp_int);
 }
