@@ -3,20 +3,23 @@
 using std::cout;
 using std::cin;
 
-const bool comp_int(int& t1, int& t2) {
+struct comp_int {
+    bool operator()(const int& t1, const int& t2) {
     return t1 < t2;
-}
+    }
+};
 
-template<class T>
-int NumberOfInvertions(T* left, T* right, const bool (*comp)(T&, T&)) {
+template<class T, class Comparator>
+int NumberOfInvertions(T* left, T* right) {
+    Comparator comp;
     if(left != right) {
         int inversions = 0;
-        int* av = left + (right - left) / 2;
-        int* i = left;
-        int* j = av+1;
-        int* newA = new int[right - left + 1];
-        inversions += NumberOfInvertions( left, av, comp);
-        inversions += NumberOfInvertions( av+1, right, comp);
+        T* av = left + (right - left) / 2;
+        T* i = left;
+        T* j = av+1;
+        T* newA = new T[right - left + 1];
+        inversions += NumberOfInvertions<T, Comparator>( left, av);
+        inversions += NumberOfInvertions<T, Comparator>( av+1, right);
 
         while(i != av + 1 && j != right + 1) {
             if(comp(*j, *i)) {
@@ -45,8 +48,8 @@ int NumberOfInvertions(T* left, T* right, const bool (*comp)(T&, T&)) {
 
 int main()
 {
-    freopen("input.txt", "r", stdin);
-    freopen("output.txt", "w", stdout);
+    //freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
     int n;
     cin >> n;
     int numbers[100000];
@@ -54,5 +57,5 @@ int main()
         cin >> numbers[i];
     }
 
-    cout << NumberOfInvertions(numbers, numbers + n - 1, comp_int);
+    cout << NumberOfInvertions<int, comp_int>(numbers, numbers + n - 1);
 }
