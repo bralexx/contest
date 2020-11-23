@@ -5,23 +5,31 @@ using std::cout;
 using std::swap;
 using std::ios_base;
 
-void kth_num(std::vector<int>& num, int K) {
+struct comp_int {
+    bool operator() (const int& t1, const int& t2) {
+        return t1 < t2;
+    }
+};
+
+template<class T, class Comparator>
+void kth_num(std::vector<T>& num, int K) {
+    Comparator comp;
     int left = 0, right = num.size() - 1;
-    int x;
+    T x;
     while(left != right){
         x = num[(rand() % (right - left)) + left];
         int i = left, j = right;
         while(i < j) {
-            while(i < right && num[i] < x)++i;
-            while(j > left && num[j] > x)--j;
+            while(i < right && comp(num[i], x))++i;
+            while(j > left && comp(x, num[j]))--j;
             if(i < j) {
                 swap(num[i], num[j]);
                 ++i;
                 --j;
             }
         }
-        while(i < right && num[i] < x)++i;
-        while(j > left && num[j] > x)--j;
+        while(i < right && comp(num[i], x))++i;
+        while(j > left && comp(x, num[j]))--j;
         if(K == i && i == j){
             left = right;
         }else{
@@ -42,7 +50,7 @@ int main() {
     for(int i = 0; i <  N; ++i) {
         cin >> num[i];
     }
-    kth_num(num, K);
+    kth_num<int, comp_int>(num, K);
     cout << num[K] << "\n";
     return 0;
 }
