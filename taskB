@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+int f(int i) {
+    return i & (i + 1);
+}
+int g(int i) {
+    return i | (i + 1);
+}
+class Fenwick {
+    size_t size;
+    std::vector<long long> sums;
+    std::vector<long long> numbers;
+public:
+    explicit Fenwick(const std::vector<long long>& num) {
+        size = num.size();
+        numbers = num;
+        std::vector<long long> pref;
+        pref.push_back(num[0]);
+        for(int i = 1; i < num.size(); ++i) {
+            if(i % 2 == 0) pref.push_back(pref[i - 1] + num[i]);
+            else pref.push_back(pref[i - 1] - num[i]);
+        }
+        for(int i = 0; i < num.size(); ++i) {
+            if(f(i) != 0) sums.push_back(pref[i] - pref[f(i) - 1]);
+            else sums.push_back(pref[i]);
+        }
+    }
+
+    long long sum(int l, int r) {
+        long long sm = 0;
+        for(int i = r; i >= 0; i = f(i) - 1) sm += sums[i];
+        for(int i = l - 1; i >= 0; i = f(i) - 1) sm -= sums[i];
+        if(l % 2 == 1) sm *= -1;
+        return sm;
+    }
+
+    void set(int id, long long val) {
+        long long d = val - numbers[id];
+        if(id % 2 == 1) d *= -1;
+        for(int i = id; i < size; i = g(i)) sums[i] += d;
+        numbers[id] = val;
+    }
+};
+int main() {
+    std::vector<long long> vec;
+    long long x0, x, y;
+    int n, m;
+    std::cin >> n;
+    for(int i = 0; i < n; ++i) {
+        std::cin >> x;
+        vec.push_back(x);
+    }
+    Fenwick tree(vec);
+    std::cin >> m;
+    for(int i = 0; i < m; ++i) {
+        std::cin >> x0 >> x >> y;
+        if(x0 == 0) {
+            tree.set(x - 1 , y);
+        } else {
+            std::cout << tree.sum(x - 1, y - 1) << "\n";
+        }
+    }
+    return 0;
+}
