@@ -1,0 +1,60 @@
+#include <iostream>
+#include <set>
+#include <map>
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::cout.tie();
+    long long N, e;
+    int K, M, s;
+    std::cin >> N >> M >> K;
+    std::set<long long> st[++M];
+    std::map<long long, std::set<long long>> mp;
+    std::string in;
+
+    for(int i = 0; i < K; ++i) {
+        std::cin >> in;
+        if(in == "ADD") {
+            std::cin >> e >> s;
+            st[s].insert(e);
+            mp[e].insert(s);
+        } else if(in == "DELETE") {
+            std::cin >> e >> s;
+            mp[e].erase(s);
+            st[s].erase(e);
+        } else if(in == "CLEAR") {
+            std::cin >> s;
+            auto x = st[s].begin();
+            while(x != st[s].end()) {
+                mp[*x].erase(s);
+                ++x;
+            }
+            st[s].clear();
+        } else if(in == "LISTSET") {
+            std::cin >> s;
+            if(st[s].empty()) {
+                std::cout << -1;
+            } else {
+                auto x = st[s].begin();
+                while (x != st[s].end()) {
+                    std::cout << *x << " ";
+                    ++x;
+                }
+            }
+            std::cout << "\n";
+        } else if(in == "LISTSETSOF") {
+            std::cin >> e;
+            if(mp[e].empty()) {
+                std:: cout << -1;
+            } else {
+                auto x = mp[e].begin();
+                while (x != mp[e].end()) {
+                    std::cout << *x << " ";
+                    ++x;
+                }
+            }
+            std::cout << "\n";
+        }
+    }
+}
