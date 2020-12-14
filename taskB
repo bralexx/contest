@@ -1,0 +1,191 @@
+#include <iostream>
+
+struct node {
+    bool empty = true;
+    long long sum = 0;
+    int value;
+    node* parent;
+    node* left;
+    node* right;
+
+    node(){}
+    node(node* ptr){parent = ptr;}
+};
+
+class SplayTree{
+    node* root;
+    void update_sum(node* ptr) {
+        ptr -> sum = ptr -> left -> sum + ptr -> right -> sum + ptr -> value;
+    }
+
+    void make_node(int key, node* ptr) {
+        ptr -> left = new node(ptr);
+        ptr -> right = new node(ptr);
+        ptr -> empty = false;
+        ptr -> value = key;
+        ptr -> sum = key;
+    }
+
+    void rotateLeft(node* t) {
+        if(t -> empty || t -> right -> empty) return;
+        node* son = t -> right;
+        if(t != root){
+            (t -> parent -> left == t ? t -> parent -> left : t -> parent -> right) = t -> right;
+            son -> parent = t -> parent;
+        } else {
+            root = son;
+            son -> parent = nullptr;
+        }
+        t -> parent = son;
+        son -> left -> parent = t;
+        t -> right = son -> left;
+        son -> left = t;
+
+        update_sum(son);
+        update_sum(t);
+    }
+
+    void rotateRight(node* t) {
+        if(t -> empty || t -> left -> empty) return;
+        node* son = t -> left;
+        if(t != root){
+            (t -> parent -> left == t ? t -> parent -> left : t -> parent -> right) = t -> left;
+            son -> parent = t -> parent;
+        } else {
+            root = son;
+            son -> parent = nullptr;
+        }
+        t -> parent = son;
+        son -> right -> parent = t;
+        t -> left = son -> right;
+        son -> right = t;
+
+        update_sum(son);
+        update_sum(t);
+    }
+
+    void splay(node* ptr) {
+        while(ptr != root) {
+            if(ptr -> parent -> left == ptr) rotateRight(ptr -> parent);
+            else rotateLeft(ptr -> parent);
+        }
+    }
+
+    node* min() {
+        node* ptr = root;
+        while(!ptr -> left -> empty) ptr = ptr -> left;
+        return ptr;
+    }
+
+    node* max() {
+        node* ptr = root;
+        while(!ptr -> right -> empty) ptr = ptr -> right;
+        return ptr;
+    }
+
+    SplayTree* split(int key) {
+        node* ptr2;
+        node* ptr = find(key);
+        if(ptr -> empty) {
+            make_node(key, ptr);
+            splay(ptr);
+            ptr2 = root -> right;
+            root = root -> left;
+            delete ptr;
+        } else {
+            splay(ptr);
+            ptr2 = root -> right;
+            root -> right = new node(root);
+        }
+        SplayTree* sp = new SplayTree(ptr2);
+        return sp;
+    }
+
+    void merge(SplayTree* sp) {
+        if(sp -> empty()) return;
+        if(this -> empty()) {
+            delete root;
+            root = sp -> root;
+            sp -> root = new node();
+            delete sp;
+            return;
+        }
+        splay(max());
+        sp -> splay(sp -> min());
+        delete root -> right;
+        root -> right = sp -> root;
+        root -> right -> parent = root;
+        sp -> root = new node();
+        update_sum(root);
+    }
+
+    long long sum() {return root -> sum;}
+
+    long long sum(node* ptr) {
+        if(ptr -> empty) return 0;
+        return (sum(ptr -> right) + sum(ptr -> left) + ptr -> value);
+    }
+
+    node* find(int key) {
+        node* ptr = root;
+        while(ptr -> value != key && !ptr -> empty) {
+            if(ptr -> value > key) {
+                ptr = ptr -> left;
+            } else {
+                ptr = ptr -> right;
+            }
+        }
+        return ptr;
+    }
+
+public:
+    SplayTree(){root = new node();}
+    SplayTree(node* ptr) {root = ptr;}
+
+    void add(int key) {
+        node* ptr = find(key);
+        if(ptr -> empty) {
+            make_node(key, ptr);
+        }
+        splay(ptr);
+    }
+
+    long long sum(int l, int r) {
+        SplayTree* bigger_r = split(r);
+        SplayTree* bigger_l = split(l);
+        long long sum = bigger_l -> sum();
+        if(!this -> empty() && max() -> value == l) sum += l;
+        merge(bigger_l);
+        merge(bigger_r);
+        return sum;
+    }
+
+    bool empty() {
+        return root -> empty;
+    }
+};
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::cout.tie();
+    int n, x, y;
+    char in, prev;
+    long long prev_res;
+    SplayTree tree;
+    std::cin >> n;
+    for(int i = 0; i < n; ++i) {
+        prev = in;
+        std::cin >> in;
+        if(in == '+') {
+            std::cin >> x;
+            if(prev == '?')x = (x + prev_res) % 1'000'000'000;
+            tree.add(x);
+        } else if(in == '?') {
+            std::cin >> x >> y;
+            prev_res = tree.sum(x, y);
+            std::cout << prev_res << "\n";
+        }
+    }
+    return 0;
+}
