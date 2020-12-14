@@ -1,0 +1,232 @@
+#include <iostream>
+
+template<class T>
+struct node {
+    int height = 0;
+    T value = 1e18 + 67482;
+    int sum = 0;
+    node* left;
+    node* right;
+    node* parent;
+
+    node(node* ptr){parent = ptr;}
+};
+
+template<class T>
+class AVLTree{
+public:
+    node<T>* root = new node<T>(nullptr);
+    void update_height(node<T>*& t){
+        t -> height = std::max(t -> left -> height, t -> right -> height) + 1;
+        t -> sum = t -> left -> sum + t -> right -> sum + 1;
+    }
+
+    void rotateLeft(node<T>* t) {
+        if(t -> height == 0 || t -> right -> height == 0) return;
+        node<T>* son = t -> right;
+        if(t != root){
+            (t -> parent -> left == t ? t -> parent -> left : t -> parent -> right) = t -> right;
+            son -> parent = t -> parent;
+        } else {
+            root = son;
+            son -> parent = nullptr;
+        }
+        t -> parent = son;
+        son -> left -> parent = t;
+        t -> right = son -> left;
+        son -> left = t;
+
+        update_height(t);
+        update_height(son);
+    }
+
+    void rotateRight(node<T>* t) {
+        if(t -> height == 0 || t -> left -> height == 0) return;
+        node<T>* son = t -> left;
+        if(t != root){
+            (t -> parent -> left == t ? t -> parent -> left : t -> parent -> right) = t -> left;
+            son -> parent = t -> parent;
+        } else {
+            root = son;
+            son -> parent = nullptr;
+        }
+        t -> parent = son;
+        son -> right -> parent = t;
+        t -> left = son -> right;
+        son -> right = t;
+
+        update_height(t);
+        update_height(son);
+    }
+
+    void balance(node<T>* t) {
+        if(t -> height == 0) return;
+        if (t -> left -> height - t -> right -> height > 1) {
+            if(t -> left -> right -> height - t -> left -> left -> height == 1) rotateLeft(t -> left);
+            rotateRight(t);
+        } else if (t -> right -> height - t -> left -> height > 1) {
+            if(t -> right -> left -> height - t -> right -> right -> height == 1)rotateRight(t -> right);
+            rotateLeft(t);
+        } else update_height(t);
+    }
+
+    void balance_all(node<T>* ptr) {
+        balance(ptr);
+        if(ptr != root)balance_all(ptr -> parent);
+    }
+
+    node<T>* merge(node<T>* ptrLess, node<T>* ptrBigger) {
+        if(ptrLess -> height + ptrBigger -> height != 0) {
+            if (ptrLess -> height < ptrBigger -> height) {
+                node<T>* ptr = merge(ptrLess, ptrBigger -> left);
+                ptr -> parent = ptrBigger;
+                ptrBigger -> left = ptr;
+                balance(ptr);
+                return ptrBigger;
+            } else {
+                node<T>* ptr = merge(ptrLess -> right, ptrBigger);
+                ptr -> parent = ptrLess;
+                ptrLess -> right = ptr;
+                balance(ptr);
+                return ptrLess;
+            }
+        } else {
+            delete ptrBigger;
+            return ptrLess;
+        }
+    }
+
+    int next(node<T>* ptr, int x) {
+        if(ptr -> height == 0) return 1e18;
+        if(ptr -> value == x){
+            if(ptr -> right -> height != 0) {
+                return min(ptr->right);
+            } else return 1e18;
+        }
+        if(ptr -> value < x) {
+            return next(ptr -> right, x);
+        } else {
+            return std::min(ptr -> value, next(ptr -> left, x));
+        }
+    }
+
+    int prev(node<T>* ptr, int x) {
+        if(ptr -> height == 0) return -1e18;
+        if(ptr -> value == x){
+            if(ptr -> left -> height != 0) {
+                return max(ptr -> left);
+            } else return -1e18;
+        }
+        if(ptr -> value > x) {
+            return prev(ptr -> left, x);
+        } else {
+            return std::max(ptr -> value, prev(ptr -> right, x));
+        }
+    }
+
+    int max(node<T>* ptr){
+        while(ptr -> height != 0) {ptr = ptr -> right;}
+        return ptr -> parent -> value;
+    }
+
+    int min(node<T>* ptr) {
+        while(ptr -> height != 0) {ptr = ptr -> left;}
+        return ptr -> parent -> value;
+    }
+
+public:
+    node<T>* find(int x) {
+        node<T>* ptr = root;
+        while(ptr -> height != 0 && ptr -> value != x) {
+            if(x > ptr -> value) {
+                ptr = ptr -> right;
+            } else {
+                ptr = ptr -> left;
+            }
+        }
+        return ptr;
+    }
+
+    void insert(int x) {
+        node<T>* ptr = find(x);
+        if(ptr -> value != x) {
+            ptr -> height = 1;
+            ptr -> value = x;
+            ptr -> left = new node<T>(ptr);
+            ptr -> right = new node<T>(ptr);
+            balance_all (ptr);
+        }
+    }
+
+    void del(int x) {
+        node<T>* ptr = find(x);
+        if(ptr -> height == 0) return;
+        if (ptr == root) {
+            node<T>* old_root = root;
+            root = merge(ptr -> left, ptr -> right);
+            balance_all(root);
+            delete old_root;
+        } else {
+            node<T>* ptr2 = merge(ptr -> left, ptr -> right);
+            (ptr -> parent -> left == ptr ? ptr -> parent -> left : ptr -> parent -> right) = ptr2;
+            ptr2 -> parent = ptr -> parent;
+            delete ptr;
+            balance_all(ptr2);
+        }
+    }
+
+    bool exists(int x) {
+        return find(x) -> height != 0;
+    }
+
+    int next(int x) {
+        return next(root, x);
+    }
+
+    int prev(int x) {
+        return prev(root, x);
+    }
+
+    bool empty() {
+        return root -> height == 0;
+    }
+
+    int max(){
+        return this -> max(root);
+    }
+
+    int min() {
+        return this -> min(root);
+    }
+};
+
+signed main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::cout.tie();
+    std::string st;
+    int x;
+    AVLTree<int> tree;
+
+    while(std::cin >> st) {
+        std::cin >> x;
+        if(st == "insert")tree.insert(x);
+        if(st == "delete")tree.del(x);
+        if(st == "exists")std::cout << (tree.exists(x) ? "true" : "false") << "\n";
+        if(st == "next"){
+            if(!tree.empty() && tree.max() > x){
+                std::cout << tree.next(x) << "\n";
+            } else {
+                std::cout << "none\n";
+            }
+        }
+        if(st == "prev"){
+            if(!tree.empty() && tree.min() < x){
+                std::cout << tree.prev(x) << "\n";
+            } else {
+                std::cout << "none\n";
+            }
+        }
+    }
+    return 0;
+}
