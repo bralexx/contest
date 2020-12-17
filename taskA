@@ -9,14 +9,14 @@ struct node {
     node* right;
     node* parent;
 
-    node(node* ptr){parent = ptr;}
+    node(node* ptr) {parent = ptr;}
 };
 
 template<class T>
 class AVLTree{
 public:
     node<T>* root = new node<T>(nullptr);
-    void update_height(node<T>*& t){
+    void update_height(node<T>*& t) {
         t -> height = std::max(t -> left -> height, t -> right -> height) + 1;
         t -> sum = t -> left -> sum + t -> right -> sum + 1;
     }
@@ -96,12 +96,12 @@ public:
         }
     }
 
-    int next(node<T>* ptr, int x) {
-        if(ptr -> height == 0) return 1e18;
+    int next(node<T>* ptr, int x) const {
+        if(ptr -> height == 0) return 1e9;
         if(ptr -> value == x){
             if(ptr -> right -> height != 0) {
                 return min(ptr->right);
-            } else return 1e18;
+            } else return 1e9;
         }
         if(ptr -> value < x) {
             return next(ptr -> right, x);
@@ -110,12 +110,12 @@ public:
         }
     }
 
-    int prev(node<T>* ptr, int x) {
-        if(ptr -> height == 0) return -1e18;
+    int prev(node<T>* ptr, int x) const {
+        if(ptr -> height == 0) return -1e9;
         if(ptr -> value == x){
             if(ptr -> left -> height != 0) {
                 return max(ptr -> left);
-            } else return -1e18;
+            } else return -1e9;
         }
         if(ptr -> value > x) {
             return prev(ptr -> left, x);
@@ -124,18 +124,18 @@ public:
         }
     }
 
-    int max(node<T>* ptr){
+    int max(node<T>* ptr) const {
         while(ptr -> height != 0) {ptr = ptr -> right;}
         return ptr -> parent -> value;
     }
 
-    int min(node<T>* ptr) {
+    int min(node<T>* ptr) const {
         while(ptr -> height != 0) {ptr = ptr -> left;}
         return ptr -> parent -> value;
     }
 
 public:
-    node<T>* find(int x) {
+    node<T>* find(int x) const {
         node<T>* ptr = root;
         while(ptr -> height != 0 && ptr -> value != x) {
             if(x > ptr -> value) {
@@ -175,27 +175,27 @@ public:
         }
     }
 
-    bool exists(int x) {
+    bool exists(int x) const {
         return find(x) -> height != 0;
     }
 
-    int next(int x) {
+    int next(int x) const {
         return next(root, x);
     }
 
-    int prev(int x) {
+    int prev(int x) const {
         return prev(root, x);
     }
 
-    bool empty() {
+    bool empty() const {
         return root -> height == 0;
     }
 
-    int max(){
+    int max() const {
         return this -> max(root);
     }
 
-    int min() {
+    int min() const {
         return this -> min(root);
     }
 };
