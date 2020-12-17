@@ -1,0 +1,62 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+class SparseTable {
+    int inf = 2e9;
+    std::vector<int> numbers;
+    std::vector<std::vector<std::vector<int*>>> tab;
+    int size;
+    int lg;
+    std::vector<int*> static merge_cells(const std::vector<int*>& v1, const std::vector<int*>& v2) {
+        if(v1 == v2) return v1;
+        std::vector<int*> new_cell;
+        auto t1 = v1.begin();
+        auto t2 = v2.begin();
+        if(*t1 == *t2) ++t2;
+        for(int i = 0; i < 2; ++i) {
+            if(**t1 <= **t2) {
+                new_cell.push_back(*t1);
+                ++t1;
+            } else {
+                new_cell.push_back(*t2);
+                ++t2;
+            }
+        }
+        return new_cell;
+    }
+public:
+    explicit SparseTable(const std::vector<int>& vec) {
+        size = vec.size();
+        lg = static_cast<int>(std::ceil(std::log(size)/std::log(2)));
+        tab.resize(lg);
+        numbers = vec;
+        for(int i = 0; i < size; ++i) {
+            tab[0].push_back({&numbers[i], &inf});
+        }
+        for(int two = 2, i = 1; i < lg; ++i, two *= 2) {
+            for(int j = 0; j < size - two + 1; ++j) tab[i].push_back(merge_cells(tab[i - 1][j], tab[i - 1][j + (two / 2)]));
+        }
+    }
+
+    int second(int l, int r) const {
+        int level = static_cast<int>(floor(log(r - l + 1)/ log(2)));
+        std::vector<int*> result = merge_cells(tab[level][l], tab[level][r - pow(2, level) + 1]);
+        return *result[1];
+    }
+};
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::cout.tie();
+    int n, m, l, r;
+    std::cin >> n >> m;
+    std::vector<int> num(n);
+    for(size_t i = 0; i < n; ++i) std::cin >> num[i];
+    SparseTable sp(num);
+    for(int i = 0; i < m; ++i) {
+        std::cin >> l >> r;
+        std::cout << sp.second(l - 1, r - 1) << "\n";
+    }
+    return 0;
+}
