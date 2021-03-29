@@ -1,0 +1,30 @@
+#include <iostream>
+#include <math.h>
+#include <vector>
+
+bool isCorrect(const int t1, const int t2, const int base) {
+    int a = t1 ^t2;
+    a = a | (a >> 1);
+    int b = t1 ^(t1 >> 1);
+    a |= b;
+    return (base >> 1) == (a & (base >> 1));
+}
+
+int main() {
+    int m0, n0;
+    std::cin >> m0 >> n0;
+    int m = std::min(m0, n0);
+    int n = std::max(m0, n0);
+    const int base = pow(2, m) - 1;
+    std::vector<std::vector<long long>> dp(base + 1, std::vector<long long>(n, 0));
+    for (int mask = 0; mask <= base; ++mask) dp[mask][0] = 1;
+    for (int col = 1; col < n; ++col)
+        for (int mask = 0; mask <= base; ++mask)
+            for (int mask_prev = 0; mask_prev <= base; ++mask_prev) {
+                if (isCorrect(mask_prev, mask, base)) dp[mask][col] += dp[mask_prev][col - 1];
+            }
+    long long ans = 0;
+    for (int mask = 0; mask <= base; ++mask) ans += dp[mask][n - 1];
+    std::cout << ans << std::endl;
+    return 0;
+}
