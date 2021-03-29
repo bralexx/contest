@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+class comp {
+    bool operator()(std::pair<int, std::pair<bool, int>> t1, std::pair<int, std::pair<bool, int>> t2) {
+        if (t1.first < t2.first) return true;
+        if (t1.first > t2.first) return false;
+        if (t1.second.first && !t2.second.first) return true;
+        if (!t1.second.first && t2.second.first) return false;
+        return t1.second.second > t2.second.second;
+    }
+};
+
+class FenwickTree {
+    int n, m;
+    std::vector<std::vector<int>> tree;
+public:
+    FenwickTree(int n0, int m0) : n(n0), m(m0), tree(std::vector<std::vector<int>>(n0, std::vector<int>(m0, 0))) {}
+
+    void insert(int x, int y, int val) {
+        tree[x][y] = val;
+        for (int i = x; i < n; i = i | (i + 1))
+            for (int j = y; j < m; j = j | (j + 1))
+                tree[i][j] = std::max(tree[i][j], val);
+    }
+
+    int get(int x, int y) {
+        int res = 0;
+        for (int i = x; i >= 0; i = (i & (i + 1)) - 1)
+            for (int j = y; j >= 0; j = (j & (j + 1)) - 1)
+                res = std::max(res, tree[i][j]);
+        return res;
+    }
+};
+
+int main() {
+    int n, m;
+    std::cin >> n >> m;
+    std::vector<int> vec1(n);
+    std::vector<int> vec2(m);
+    std::vector<std::pair<int, std::pair<bool, int>>> vecAll;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> vec1[i];
+        vecAll.push_back({vec1[i], {true, i}});
+    }
+    for (int i = 0; i < m; ++i) {
+        std::cin >> vec2[i];
+        vecAll.push_back({vec2[i], {false, i}});
+    }
+
+    sort(vecAll.begin(), vecAll.end(), comp());
+    FenwickTree tree(n, m);
+    std::vector<int> numbersFromVec1;
+    std::vector<int> numbersFromVec2;
+    for (int i = 0; i < n + m;) {
+        numbersFromVec1.clear();
+        numbersFromVec2.clear();
+        do {
+            if (vecAll[i].second.first) numbersFromVec1.push_back(vecAll[i].second.second);
+            else numbersFromVec2.push_back(vecAll[i].second.second);
+            ++i;
+        } while (i < n + m && vecAll[i - 1].first == vecAll[i].first);
+        if (numbersFromVec1.empty() || numbersFromVec2.empty()) continue;
+        for (int x = 0; x < numbersFromVec1.size(); ++x)
+            for (int y = 0; y < numbersFromVec2.size(); ++y)
+                tree.insert(numbersFromVec1[x], numbersFromVec2[y],
+                            tree.get(numbersFromVec1[x], numbersFromVec2[y]) + 1);
+    }
+    std::cout << tree.get(n - 1, m - 1) << std::endl;
+    return 0;
+}
