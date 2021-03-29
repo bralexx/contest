@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+int main() {
+    size_t n;
+    std::cin >> n;
+    std::vector<std::vector<size_t>> weights(n, std::vector<size_t>(n));
+    for(size_t i = 0; i < n; ++i) for(size_t j = 0; j < n; ++j) std::cin >> weights[i][j];
+    size_t maxMask = pow(2, n) - 1;
+    std::vector<std::vector<std::pair<size_t, size_t>>> dp(maxMask + 1, std::vector<std::pair<size_t, 
+                                                           size_t>>(n, {1e9, -1}));
+    for(size_t j = 0; j < n; ++j) dp[1 << j][j] = {0, -1};
+    for(size_t mask = 3; mask <= maxMask; ++mask) for(size_t j = 0; j < n; ++j) {
+        if(mask & (1 << j)) {
+            for(size_t prev = 0; prev < n; ++prev) if(j != prev && mask & (1 << prev)) {
+                if(dp[mask ^ (1 << j)][prev].first + weights[prev][j] < dp[mask][j].first) {
+                    dp[mask][j].first = dp[mask ^ (1 << j)][prev].first + weights[prev][j];
+                    dp[mask][j].second = prev;
+                }
+            }
+        }
+    }
+    size_t lastNode = 0;
+    for(size_t j = 1; j < n; ++j) if(dp[maxMask][j].first < dp[maxMask][lastNode].first) lastNode = j;
+    std::cout << dp[maxMask][lastNode].first << '\n';
+    size_t mask = maxMask;
+    while(lastNode != -1) {
+        std::cout << lastNode + 1 << " ";
+        mask ^= 1 << lastNode;
+        lastNode = dp[mask ^ (1 << lastNode)][lastNode].second;
+    }
+    return 0;
+}
