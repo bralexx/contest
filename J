@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+const long long mod = 999999937;
+
+std::vector<long long> merge(const std::vector<long long> &t1, const std::vector<long long> &t2) {
+    std::vector<long long> res(25);
+    for (int i = 0; i < 5; ++i)
+        for (int j = 0; j < 5; ++j) {
+            res[5 * i + j] = ((t1[5 * i] + t1[5 * i + 1] + t1[5 * i + 2] + t1[5 * i + 3] + t1[5 * i + 4]) % mod)
+                             * (t2[j] + t2[5 + j] + t2[10 + j]) % mod;
+            res[5 * i + j] += ((t1[5 * i] + t1[5 * i + 1] + t1[5 * i + 3]) % mod) * (t2[20 + j] + t2[15 + j]) % mod;
+        }
+    return res;
+}
+
+int main() {
+    std::vector<long long> input;
+    long long in;
+    std::cin >> in;
+    for (int i = 0; in != 0; ++i) {
+        input.push_back(in);
+        std::cin >> in;
+    }
+    std::vector<std::vector<long long>> dp(51, std::vector<long long>(25));
+    for (int i = 0; i < 25; ++i) dp[0][i] = (i / 5) == (i % 5);
+    for (int i = 1; i < 51; ++i) dp[i] = merge(dp[i - 1], dp[i - 1]);
+
+    for (long long i : input) {
+        std::vector<long long> ans(25);
+        long long start = log2(((i - 1) ^ i) & i);
+        ans = dp[start];
+        for (int j = start + 1; j <= 50; ++j) {
+            if ((i >> j) & 1) ans = merge(ans, dp[j]);
+        }
+        long long answer_as_number = 0;
+        for (int j = 0; j < 25; ++j) answer_as_number += ans[j];
+        answer_as_number %= mod;
+        std::cout << answer_as_number << std::endl;
+    }
+    return 0;
+}
