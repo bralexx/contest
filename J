@@ -1,0 +1,17 @@
+#include <iostream>
+#include <vector>
+
+int main() {
+    int S, N;
+    std::cin >> S >> N;
+    std::vector<int> weight(N);
+    for (size_t i = 0; i < N; ++i) std::cin >> weight[i];
+    std::vector<std::vector<int>> dp(N + 1, std::vector<int>(S + 1));
+    for (size_t i = 0; i < S + 1; ++i) dp[0][i] = 0;
+    for (size_t n = 1; n <= N; ++n)
+        for (size_t s = 0; s <= S; ++s)
+            if (weight[n - 1] <= s) dp[n][s] = std::max(dp[n - 1][s - weight[n - 1]] + weight[n - 1], dp[n - 1][s]);
+            else dp[n][s] = dp[n - 1][s];
+    std::cout << dp[N][S] << std::endl;
+    return 0;
+}
