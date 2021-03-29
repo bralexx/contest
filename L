@@ -1,0 +1,300 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+
+class BigInteger {
+    std::vector<long long> bigint;
+    int sign = 1;
+    const int bms = 1'000'000'000; //block max size
+
+    long long to_next(const size_t &i) {
+        long long tn = bigint[i] / bms;
+        if (bigint[i] < 0 && (bigint[i] % bms != 0)) --tn;
+        return tn;
+    }
+
+    void del_zero_blocks() {
+        size_t i = bigint.size() - 1;
+        while ((bigint[i] == 0) && (i != 0)) {
+            bigint.pop_back();
+            --i;
+        }
+    }
+
+    void update_block(size_t i) {
+        long long tn = to_next(i);
+        if (tn == 0) return;
+        if (i == bigint.size() - 1) bigint.push_back(tn);
+        else bigint[i + 1] += tn;
+        bigint[i] = bigint[i] - tn * bms;
+    }
+
+    void update_block(size_t i, int sn) {
+        long long tn = to_next(i);
+        if (tn == 0) return;
+        if (i == bigint.size() - 1) bigint.push_back(sn * tn);
+        else bigint[i + 1] += tn * sn;
+        bigint[i] = bigint[i] - tn * bms;
+    }
+
+    bool static abs_less(const BigInteger &t1, const BigInteger &t2) {
+        if (t1.bigint.size() < t2.bigint.size()) return true;
+        if (t1.bigint.size() > t2.bigint.size()) return false;
+        for (size_t i = t1.bigint.size() - 1;; --i) {
+            if (t1.bigint[i] < t2.bigint[i]) return true;
+            if (t1.bigint[i] > t2.bigint[i]) return false;
+            if (i == 0) return false;
+        }
+    }
+
+
+public:
+    friend std::istream &operator>>(std::istream &in, BigInteger &bi);
+
+    BigInteger abs() const {
+        BigInteger copy = *this;
+        copy.sign = 1;
+        return copy;
+    }
+
+    BigInteger(const BigInteger &t) {
+        sign = t.sign;
+        bigint = t.bigint;
+    }
+
+    BigInteger(const int &n = 0) {
+        bigint.push_back(n);
+        if (n < 0) {
+            sign = -1;
+            bigint[0] *= -1;
+        }
+        update_block(0);
+    }
+
+    BigInteger(std::string str) {
+        int i = 0;
+        if (str[0] == '-') {
+            i = 1;
+            sign = -1;
+        } else sign = 1;
+        long long num;
+        for (int j = (int) str.length() - 1; j >= i; j -= 9) {
+            num = 0;
+            if (j + 1 - i >= 9)
+                for (int k = 8; k >= 0; --k) {
+                    num *= 10;
+                    num += str[j - k] - '0';
+                }
+            else
+                for (; i <= j; ++i) {
+                    num *= 10;
+                    num += str[i] - '0';
+                }
+            bigint.push_back(num);
+        }
+        del_zero_blocks();
+        if ((bigint.size() == 1) && (bigint[0] == 0)) sign = 1;
+    }
+
+    ~BigInteger() {
+        bigint.clear();
+    }
+
+    BigInteger &operator=(const BigInteger &t) {
+        sign = t.sign;
+        bigint = t.bigint;
+        return *this;
+    }
+
+
+    BigInteger &operator+=(const BigInteger &t2) {
+        if (sign == -1) {
+            sign = 1;
+            *this -= t2;
+            if (!((bigint.size() == 1) && (bigint[0] == 0))) sign *= -1;
+            return *this;
+        }
+        {
+            size_t m = std::max(bigint.size(), t2.bigint.size());
+            int s = 1;
+            if (t2.sign == -1 && abs_less(*this, t2)) s = -1;
+            for (size_t i = 0; i < m; ++i) {
+                if (bigint.size() == i) bigint.push_back(0);
+                if (i < t2.bigint.size()) {
+                    bigint[i] += t2.sign * t2.bigint[i];
+                    bigint[i] *= s;
+                } else if ((bigint[i] < bms) && (bigint[i] >= 0)) i = m;
+                if (i != m)update_block(i, s);
+            }
+            sign *= s;
+            if ((bigint.size() == 1) && (bigint[0] == 0)) sign = 1;
+            del_zero_blocks();
+        }
+        return *this;
+    }
+
+    BigInteger &operator-=(const BigInteger &t2) {
+        if (sign == -1) {
+            sign = 1;
+            *this += t2;
+            if (!((bigint.size() == 1) && (bigint[0] == 0))) sign *= -1;
+            return *this;
+        }
+        size_t m = std::max(bigint.size(), t2.bigint.size());
+        int s = 1;
+        if (t2.sign == 1 && abs_less(*this, t2)) s = -1;
+        for (size_t i = 0; i < m; ++i) {
+            if (bigint.size() == i) bigint.push_back(0);
+            if (i < t2.bigint.size()) {
+                bigint[i] -= t2.sign * t2.bigint[i];
+                bigint[i] *= s;
+                update_block(i, s);
+            } else if ((bigint[i] < bms) && (bigint[i] >= 0)) i = m;
+            if (i != m)update_block(i, s);
+        }
+        sign *= s;
+        if ((bigint.size() == 1) && (bigint[0] == 0)) sign = 1;
+        del_zero_blocks();
+        return *this;
+    }
+
+    BigInteger &operator*=(const int &t2) {
+        if (t2 == 0 || ((bigint.size() == 1) && (bigint[0] == 0))) {
+            *this = 0;
+            return *this;
+        }
+        if (t2 == bms) {
+            bigint.push_back(0);
+            for (size_t i = bigint.size() - 1; i > 0; --i) bigint[i] = bigint[i - 1];
+            bigint[0] = 0;
+            return *this;
+        }
+        if (std::abs(t2) != 1) {
+            bigint.push_back(0);
+            for (size_t i = 0; i < bigint.size(); ++i) bigint[i] *= std::abs(t2);
+            for (size_t i = 0; i < bigint.size(); ++i) update_block(i);
+            del_zero_blocks();
+        }
+        if (t2 < 0) sign *= -1;
+        return *this;
+    }
+
+    BigInteger &operator/=(long long div) {
+        if (div < 0) {
+            sign *= -1;
+            div *= -1;
+        }
+        if ((bigint.size() == 1) && (bigint[0] == 0)) {
+            sign = 1;
+            return *this;
+        }
+        for (size_t i = bigint.size() - 1; i > 0; --i) {
+            bigint[i - 1] += (bigint[i] % div) * bms;
+            bigint[i] /= div;
+        }
+        bigint[0] /= div;
+        del_zero_blocks();
+        return *this;
+    }
+
+    BigInteger &operator%=(int div) {
+        BigInteger copy = *this;
+        copy /= div;
+        copy *= div;
+        *this -= copy;
+        return *this;
+    }
+
+
+    bool operator==(const BigInteger &t) const {
+        if (sign != t.sign) return false;
+        if (bigint.size() != t.bigint.size()) return false;
+        for (size_t i = 0; i < bigint.size(); ++i) {
+            if (bigint[i] != t.bigint[i]) return false;
+        }
+        return true;
+    }
+
+    bool operator>(const BigInteger &t) const {
+        if (sign > t.sign) return true;
+        if (sign < t.sign) return false;
+        if (sign == 1) return abs_less(*this, t);
+        if (sign == -1) return abs_less(t, *this);
+        return false;
+    }
+};
+
+BigInteger operator%(const BigInteger &t1, const int &t2) {
+    BigInteger copy = t1;
+    copy %= t2;
+    return copy;
+}
+
+std::istream &operator>>(std::istream &in, BigInteger &bi) {
+    bi.bigint.clear();
+    std::string str;
+    in >> str;
+    bi = BigInteger(str);
+    return in;
+}
+
+bool is_correct(const size_t t1, const size_t t2, const size_t max_mask) {
+    size_t a = t1 ^t2;
+    a = a | (a >> 1);
+    size_t b = t1 ^(t1 >> 1);
+    a |= b;
+    return (max_mask >> 1) == (a & (max_mask >> 1));
+}
+
+std::vector<std::vector<size_t>> matrix_multiplication(const std::vector<std::vector<size_t>> &t1,
+                                                       const std::vector<std::vector<size_t>> &t2,
+                                                       size_t mod) {
+    std::vector<std::vector<size_t>> result(t1.size(), std::vector<size_t>(t2.size()));
+    for (size_t i = 0; i < t1.size(); ++i)
+        for (size_t j = 0; j < t1.size(); ++j)
+            for (size_t k = 0; k < t1.size(); ++k) {
+                result[i][j] += t1[i][k] * t2[k][j];
+                result[i][j] %= mod;
+            }
+    return result;
+}
+
+int main() {
+    BigInteger n;
+    size_t m, mod;
+    std::cin >> n >> m >> mod;
+    n -= 1;
+    std::vector<bool> n_bits;
+    while (n > 0) {
+        n_bits.push_back(n % 2 == 1);
+        n /= 2;
+    }
+    size_t maxMask = pow(2, m) - 1;
+    std::vector<std::vector<size_t>> matrix(maxMask + 1, std::vector<size_t>(maxMask + 1));
+    for (size_t mask1 = 0; mask1 <= maxMask; ++mask1) {
+        for (size_t mask2 = 0; mask2 <= maxMask; ++mask2) {
+            matrix[mask1][mask2] = is_correct(mask1, mask2, maxMask);
+        }
+    }
+
+    std::vector<std::vector<size_t>> matrix_answer(maxMask + 1, std::vector<size_t>(maxMask + 1, 0));
+    for (size_t mask1 = 0; mask1 <= maxMask; ++mask1) {
+        for (size_t mask2 = 0; mask2 <= maxMask; ++mask2) {
+            matrix_answer[mask1][mask2] = mask1 == mask2;
+        }
+    }
+
+    for (size_t i = 0; i < n_bits.size(); ++i) {
+        if (n_bits[i]) matrix_answer = matrix_multiplication(matrix_answer, matrix, mod);
+        matrix = matrix_multiplication(matrix, matrix, mod);
+    }
+    size_t answer = 0;
+    for (size_t i = 0; i < matrix_answer.size(); ++i)
+        for (size_t j = 0; j < matrix_answer.size(); ++j) {
+            answer += matrix_answer[i][j];
+            answer %= mod;
+        }
+    std::cout << answer << std::endl;
+    return 0;
+}
