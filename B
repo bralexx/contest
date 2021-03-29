@@ -1,0 +1,81 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <map>
+
+class comp{
+    bool operator() (std::pair<int, int> t1, std::pair<int, int> t2) {
+        if(t1.first == t2.first) return t1.second < t2.second;
+        return t1.first > t2.first;
+    }
+};
+
+class Tree {
+    int height;
+    std::vector<std::pair<int, int>> tree;
+public:
+    explicit Tree(size_t n) {
+        height = ceil(log2(n));
+        tree = std::vector<std::pair<int, int>>(pow(2, height + 1), {0, -1});
+    }
+
+    void insert(size_t pos, int len, int value) {
+        pos += pow(2, height);
+        tree[pos] = {len, value};
+        while(pos != 0) {
+            pos /= 2;
+            tree[pos] = std::max(tree[2 * pos], tree[2 * pos + 1]);
+        }
+    }
+
+    std::pair<int, int> getPref(int pos) const {
+        size_t tree_pos = 1;
+        std::pair<int, int> ans = {0, 0};
+        for(int i = height - 1; i >= -1; --i) {
+            if(pos + 1 == ceil(pow(2, i + 1))) {
+                ans = std::max(ans, tree[tree_pos]);
+                break;
+            } else if(pos + 1 > ceil(pow(2, i))) {
+                tree_pos *= 2;
+                ans = std::max(ans, tree[tree_pos]);
+                ++tree_pos;
+                pos -= ceil(pow(2, i));
+            } else {
+                tree_pos *= 2;
+            }
+        }
+        return ans;
+    }
+};
+
+int main() {
+    size_t n;
+    std::cin >> n;
+    std::vector<std::pair<int, int>> numbers(n);
+    for(size_t i = 0; i < n; ++i) {
+        std::cin >> numbers[i].first;
+        numbers[i].second = i;
+    }
+    std::sort(numbers.begin(), numbers.end(), comp());
+
+    Tree tree(n);
+    std::map<int, int> ansRecovery;
+    for(auto i : numbers) {
+        std::pair<int, int> p = tree.getPref(i.second);
+        tree.insert(i.second, p.first + 1, i.second + 1);
+        ansRecovery[i.second + 1] = p.second;
+    }
+
+    std::pair<int,int> p = tree.getPref(n);
+    std::cout << p.first << '\n';
+    std::vector<int> answer;
+    int prev = p.second;
+    while(ansRecovery.find(prev) != ansRecovery.end()) {
+        answer.push_back(prev);
+        prev = ansRecovery[prev];
+    }
+    for(auto i = answer.rbegin(); i != answer.rend(); ++i) std::cout << *i << ' ';
+    std::cout << '\n';
+    return 0;
+}
