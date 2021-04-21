@@ -14,8 +14,7 @@ struct Comp {
     }
 };
 
-std::vector<Node> dijkstra(const std::vector<Node>& nodes_, size_t start) {
-    std::vector<Node> nodes = nodes_;
+std::vector<Node> dijkstra(std::vector<Node>& nodes, size_t start) {
     std::priority_queue<Node*, std::vector<Node*>, Comp> queue;
     queue.push(&nodes[start]);
     nodes[start].dist = 0;
@@ -29,7 +28,7 @@ std::vector<Node> dijkstra(const std::vector<Node>& nodes_, size_t start) {
         top_node->used = true;
         queue.pop();
     }
-    return nodes_;
+    return nodes;
 }
 
 int main() {
