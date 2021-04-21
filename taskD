@@ -1,0 +1,51 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+
+struct Node {
+    std::vector<std::pair<size_t, long long>> edges;
+    bool inf_less = false;
+    long long dist = 1e18;
+};
+
+void dfs(std::vector<Node>& nodes, size_t node_num) {
+    if (nodes[node_num].inf_less) return;
+    nodes[node_num].inf_less = true;
+    for (auto edge : nodes[node_num].edges) dfs(nodes, edge.first);
+}
+
+std::vector<Node> fordBellman(std::vector<Node> nodes, size_t start) {
+    std::vector<std::vector<long long>> dp(nodes.size(), std::vector<long long>(nodes.size() + 1, 1e18));
+    dp[start][0] = 0;
+    for (size_t k = 0; k < nodes.size(); ++k)
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            if (k != 0) dp[i][k] = std::min(dp[i][k], dp[i][k - 1]);
+            for (auto edge : nodes[i].edges)
+                dp[edge.first][k + 1] = std::min(dp[edge.first][k + 1], dp[i][k] + edge.second);
+        }
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        if (dp[i][nodes.size()] < dp[i][nodes.size() - 1] && dp[i][nodes.size()] < 1e17) dfs(nodes, i);
+        nodes[i].dist = dp[i][nodes.size() - 1];
+    }
+    return nodes;
+}
+
+int main() {
+    size_t n, m, start;
+    std::cin >> n >> m >> start;
+    --start;
+    std::vector<Node> nodes(n);
+    for (size_t i = m; i; --i) {
+        size_t s, e;
+        long long w;
+        std::cin >> s >> e >> w;
+        --s;
+        --e;
+        nodes[s].edges.emplace_back(e, w);
+    }
+    std::vector<Node> answer = fordBellman(nodes, start);
+    for (auto& node : answer)
+        if (node.inf_less) std::cout << "-\n";
+        else if (node.dist > 1e17) std::cout << "*\n";
+        else std::cout << node.dist << '\n';
+}
