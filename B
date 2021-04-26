@@ -29,7 +29,7 @@ public:
         }
     }
 
-    std::pair<int, int> getPref(int pos) const {
+    std::pair<int, int> getPrev(int pos) const {
         size_t tree_pos = 1;
         std::pair<int, int> ans = {0, 0};
         for(int i = height - 1; i >= -1; --i) {
@@ -62,12 +62,12 @@ int main() {
     Tree tree(n);
     std::map<int, int> ansRecovery;
     for(auto i : numbers) {
-        std::pair<int, int> p = tree.getPref(i.second);
+        std::pair<int, int> p = tree.getPrev(i.second);
         tree.insert(i.second, p.first + 1, i.second + 1);
         ansRecovery[i.second + 1] = p.second;
     }
 
-    std::pair<int,int> p = tree.getPref(n);
+    std::pair<int,int> p = tree.getPrev(n);
     std::cout << p.first << '\n';
     std::vector<int> answer;
     int prev = p.second;
