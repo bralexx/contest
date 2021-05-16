@@ -1,0 +1,27 @@
+#include <iostream>
+#include <vector>
+
+void findEulerPath(int v, std::vector<std::vector<int>> &graph, std::vector<int>& ans) {
+    while(!graph[v].empty()) {
+        int next = graph[v].back();
+        graph[v].pop_back();
+        findEulerPath(next, graph, ans);
+    }
+    ans.push_back(v);
+}
+
+int main() {
+    size_t n, a, x;
+    std::cin >> n >> a;
+    std::vector<std::vector<int>> graph(n);
+    for (int i = 0; i < n; ++i) for (int j = 0; j < n; ++j) {
+        std::cin >> x;
+        if(x == 0 && i != j) graph[i].push_back(j);
+    }
+    std::vector<int> ans;
+    findEulerPath(a - 1, graph, ans);
+    for(auto it = ans.rbegin(); it != --ans.rend();) {
+        std::cout << *it + 1 << ' ' << *(++it) + 1 << '\n';
+    }
+    return 0;
+}
