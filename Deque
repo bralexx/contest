@@ -1,0 +1,407 @@
+#include <vector>
+
+template<typename T>
+class Deque {
+public:
+    size_t sz;
+    int x0 = 0;
+    std::vector<std::vector<T*>*> baskets;
+    const size_t basketSize = 8;
+    size_t head;
+    size_t tail;
+    size_t headBasket;
+    size_t tailBasket;
+    size_t capacity;
+
+    void setSizeForEmpty(size_t sz_) {
+        sz = sz_;
+        size_t numOfBaskets = sz / basketSize;
+        ++numOfBaskets;
+        capacity = numOfBaskets + 2 * (numOfBaskets / 2);
+        baskets = std::vector<std::vector<T*>*>(capacity);
+        head = numOfBaskets / 2;
+        tail = numOfBaskets / 2 + numOfBaskets;
+        headBasket = 0;
+        tailBasket = sz % basketSize;
+    }
+
+    void updateCapacity(size_t newHead, size_t newCapacity) {
+        std::vector<std::vector<T*>*> newBaskets(newCapacity);
+        size_t numOfBaskets = tail - head;
+        try {
+            for (size_t i = 0; i < numOfBaskets; ++i) newBaskets[i + newHead] = baskets[i + head];
+        } catch (const std::exception& exp) {
+            throw exp;
+            return;
+        }
+        baskets = newBaskets;
+        tail = int(tail) + int(newHead) - int(head);
+        head = newHead;
+        capacity = newCapacity;
+    }
+
+    template<bool IsConst>
+    class commonIterator {
+        std::conditional_t<IsConst, const Deque<T>*, Deque<T>*> ptr;
+        int pos;
+    public:
+        using iterator_category = std::random_access_iterator_tag;
+        using value_type = std::conditional_t<IsConst, const T, T>;
+        using reference = value_type&;
+        using pointer = value_type*;
+        using difference_type = int;
+
+        commonIterator(std::conditional_t<IsConst, const Deque<T>*, Deque<T>*> ptr_, size_t index_) : ptr(ptr_) {
+            pos = index_ - ptr->x0;
+        }
+
+        commonIterator(const commonIterator<IsConst>& other) {
+            ptr = other.ptr;
+            pos = other.pos;
+        };
+
+        commonIterator<IsConst>& operator=(const commonIterator<IsConst>& other) {
+            ptr = other.ptr;
+            pos = other.pos;
+            return *this;
+        }
+
+        commonIterator<IsConst>& operator++() {
+            ++pos;
+            return *this;
+        }
+
+        commonIterator<IsConst>& operator--() {
+            --pos;
+            return *this;
+        }
+
+        commonIterator<IsConst>& operator+=(int val) {
+            pos += val;
+            return *this;
+        }
+
+        commonIterator<IsConst>& operator-=(int val) {
+            pos -= val;
+            return *this;
+        }
+
+        commonIterator<IsConst> operator+(int val) {
+            commonIterator<IsConst> copy(*this);
+            copy += val;
+            return copy;
+        }
+
+        commonIterator<IsConst> operator-(int val) {
+            commonIterator<IsConst> copy(*this);
+            copy -= val;
+            return copy;
+        }
+
+        int operator-(const commonIterator<IsConst>& other) {
+            return int(pos) - int(other.pos);
+        }
+
+        std::conditional_t<IsConst, const T&, T&> operator*() {
+            return ptr->operator[](pos + ptr->x0);
+        }
+
+        std::conditional_t<IsConst, const T*, T*> operator->() {
+            if (pos - int(ptr->x0) > int(ptr->sz)) return nullptr;
+            return &(ptr->operator[](pos + ptr->x0));
+        }
+
+        bool operator>(const commonIterator<IsConst>& other) {
+            return pos > other.pos;
+        }
+
+        bool operator<(const commonIterator<IsConst>& other) {
+            return pos < other.pos;
+        }
+
+        bool operator>=(const commonIterator<IsConst>& other) {
+            return pos >= other.pos;
+        }
+
+        bool operator<=(const commonIterator<IsConst>& other) {
+            return pos <= other.pos;
+        }
+
+        bool operator==(const commonIterator<IsConst>& other) {
+            return (pos == other.pos) && (ptr == other.ptr);
+        }
+
+        bool operator!=(const commonIterator<IsConst>& other) {
+            return (pos != other.pos);
+        }
+    };
+
+    void swap(Deque<T> other) {
+        std::swap(baskets, other.baskets);
+        std::swap(sz, other.sz);
+        std::swap(head, other.head);
+        std::swap(tail, other.tail);
+        std::swap(headBasket, other.headBasket);
+        std::swap(tailBasket, other.tailBasket);
+        std::swap(capacity, other.capacity);
+    }
+
+public:
+    Deque() {
+        sz = 0;
+        baskets = std::vector<std::vector<T*>*>(1);
+        baskets[0] = new std::vector<T*>(basketSize);
+        head = 0;
+        tail = 1;
+        headBasket = 0;
+        tailBasket = 0;
+        capacity = 1;
+    }
+
+    Deque(const Deque<T>& other) : head(other.head), tail(other.tail), headBasket(other.headBasket),
+                                   tailBasket(other.tailBasket) {
+        sz = other.sz;
+        capacity = other.capacity;
+        baskets = std::vector<std::vector<T*>*>(capacity);
+        for (size_t i = head; i < tail; ++i) {
+            baskets[i] = new std::vector<T*>(basketSize);
+            try {
+                for (size_t j = (i == head ? headBasket : 0); j < (i == tail - 1 ? tailBasket : basketSize); ++j) {
+                    (*baskets[i])[j] = new T(*(*other.baskets[i])[j]);
+                }
+            } catch (const std::exception& exc) {
+                throw exc;
+                for (size_t ii = head; ii <= i; ++ii) delete baskets[ii];
+                Deque();
+            }
+        }
+    }
+
+    explicit Deque(const int sz_) {
+        sz = sz_;
+        setSizeForEmpty(sz);
+        for (size_t i = head; i < tail; ++i) {
+            baskets[i] = new std::vector<T*>(basketSize);
+            try {
+                for (size_t j = 0; j < (i == tail - 1 ? tailBasket : basketSize); ++j) {
+                    (*baskets[i])[j] = new T();
+                }
+            } catch (const std::exception& exc) {
+                throw exc;
+                for (size_t ii = head; ii <= i; ++ii) delete baskets[ii];
+                Deque();
+            }
+        }
+    }
+
+    Deque(int sz_, const T& value) {
+        sz = sz_;
+        setSizeForEmpty(sz);
+        for (size_t i = head; i < tail; ++i) {
+            baskets[i] = new std::vector<T*>(basketSize);
+            for (size_t j = 0; j < (i == tail - 1 ? tailBasket : basketSize); ++j) {
+                try {
+                    (*baskets[i])[j] = new T(value);
+                } catch (const std::exception& exc) {
+                    throw exc;
+                    for (size_t ii = head; ii <= i; ++ii) delete baskets[ii];
+                    Deque();
+                }
+            }
+        }
+    }
+
+    Deque<T>& operator=(const Deque<T>& other) {
+        sz = other.sz;
+        Deque<T> copy(other);
+        swap(copy);
+        return *this;
+    }
+
+    ~Deque() {
+        for (size_t i = head; i < tail; ++i) {
+            for (size_t j = 0; j < basketSize; ++j) {
+                delete (*baskets[i])[j];
+            }
+            delete baskets[i];
+        }
+    }
+
+    size_t size() const {
+        return sz;
+    }
+
+    T& operator[](size_t index) {
+        return *(*baskets[head + (index + headBasket) / basketSize])[(index + headBasket) % basketSize];
+    }
+
+    const T& operator[](size_t index) const {
+        return *(*baskets[head + (index + headBasket) / basketSize])[(index + headBasket) % basketSize];
+    }
+
+    T& at(size_t index) {
+        if (index < 0 || index >= sz) throw std::out_of_range("exception out_of_range");
+        return *(*baskets[head + (index + headBasket) / basketSize])[(index + headBasket) % basketSize];
+    }
+
+    const T& at(size_t index) const {
+        if (index < 0 || index >= sz) throw std::out_of_range("exception out_of_range");
+        return *(*baskets[head + (index + headBasket) / basketSize])[(index + headBasket) % basketSize];
+    }
+
+    void push_back(const T& value) {
+        try {
+            (*baskets[tail - 1])[tailBasket] = new T(value);
+        } catch (const std::exception& exc) {
+            throw exc;
+            return;
+        }
+        ++tailBasket;
+        if (tailBasket == basketSize) {
+            if (tail == capacity) {
+                updateCapacity(head, 2 * capacity);
+            }
+            tailBasket = 0;
+            baskets[tail] = new std::vector<T*>(basketSize);
+            ++tail;
+        }
+        ++sz;
+    }
+
+    void push_front(const T& value) {
+        ++x0;
+        if (headBasket == 0) {
+            if (head == 0) {
+                updateCapacity(head + capacity, 2 * capacity);
+            }
+            --head;
+            baskets[head] = new std::vector<T*>(basketSize);
+            headBasket = basketSize;
+        }
+        --headBasket;
+        try {
+            (*baskets[head])[headBasket] = new T(value);
+        } catch (const std::exception& exc) {
+            throw exc;
+            return;
+        }
+        ++sz;
+    }
+
+    void pop_back() {
+        --sz;
+        if (sz == 0) return;
+        if (tailBasket != 0) {
+            --tailBasket;
+            return;
+        }
+        --tail;
+        delete baskets[tail];
+        tailBasket = basketSize - 1;
+        if (tail < capacity / 4) {
+            updateCapacity(head, capacity / 2);
+        }
+    }
+
+    void pop_front() {
+        --x0;
+        --sz;
+        if (sz == 0) return;
+        ++headBasket;
+        if (headBasket == basketSize) {
+            delete baskets[head];
+            ++head;
+            headBasket = 0;
+            if (head > 3 * (capacity / 4)) {
+                updateCapacity(head - capacity / 2, capacity - capacity / 2);
+            }
+        }
+    }
+
+    using iterator = commonIterator<false>;
+    using const_iterator = commonIterator<true>;
+
+    using reverse_iterator = std::reverse_iterator<commonIterator<false>>;
+    using const_reverse_iterator = std::reverse_iterator<commonIterator<true>>;
+
+    iterator begin() {
+        return iterator(this, 0);
+    }
+
+    const_iterator begin() const {
+        return const_iterator(this, 0);
+    }
+
+    const_iterator cbegin() const {
+        const_iterator it(this, 0);
+        return it;
+    }
+
+    iterator end() {
+        return iterator(this, sz);
+    }
+
+    const_iterator end() const {
+        return const_iterator(this, sz);
+    }
+
+    const_iterator cend() const {
+        return const_iterator(this, sz);
+    }
+
+    reverse_iterator rbegin() {
+        return reverse_iterator(iterator(this, sz - 1));
+    }
+
+    const_reverse_iterator rbegin() const {
+        return const_reverse_iterator(iterator(this, sz - 1));
+    }
+
+    const_reverse_iterator crbegin() const {
+        return const_reverce_iterator(iterator(this, sz - 1));
+    }
+
+    reverse_iterator rend() {
+        return reverse_iterator(iterator(this, 0));
+    }
+
+    const_reverse_iterator rend() const {
+        return const_reverse_iterator(iterator(this, 0));
+    }
+
+    const_reverse_iterator crend() const {
+        return const_reverse_iterator(iterator(this, 0));
+    }
+
+    void insert(iterator it, const T& value) {
+        size_t index = it - begin();
+        push_back(operator[](sz - 1));
+        try {
+            for (size_t i = sz - 1; i > index; --i) operator[](i) = operator[](i - 1);
+        } catch (const std::exception& exp) {
+            throw exp;
+        }
+        operator[](index) = value;
+    }
+
+    void erase(iterator it) {
+        size_t index = it - begin();
+        try {
+            for (size_t i = index; i < sz - 1; ++i) operator[](i) = operator[](i + 1);
+        } catch (const std::exception& exp) {
+            throw exp;
+        }
+        pop_back();
+    }
+};
+
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, Deque<T> d) {
+    size_t sz = d.sz;
+    for (size_t i = 0; i < sz; ++i) {
+        out << d[i] << " ";
+    }
+    out << '\n';
+    return out;
+}
