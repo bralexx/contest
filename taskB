@@ -1,0 +1,37 @@
+#include <iostream>
+#include <vector>
+
+void dfsOneVert(size_t v, const std::vector<std::vector<int>>& graph, size_t& timer, std::vector<int>& color,
+                std::vector<int>& tin, std::vector<int>& tout) {
+    color[v] = 1;
+    tin[v] = ++timer;
+    for (int i = 0; i < graph[v].size(); ++i)
+        if (color[graph[v][i]] == 0) dfsOneVert(graph[v][i], graph, timer, color, tin, tout);
+    tout[v] = ++timer;
+    color[v] = 2;
+}
+
+std::pair<std::vector<int>, std::vector<int>> dfs(const std::vector<std::vector<int>>& graph) {
+    std::vector<int> color(graph.size(), 0);
+    std::vector<int> tin(graph.size(), -1);
+    std::vector<int> tout(graph.size(), -1);
+    size_t timer = 0;
+    for (int i = 0; i < graph.size(); ++i) if (color[i] == 0) dfsOneVert(i, graph, timer, color, tin, tout);
+    return {tin, tout};
+}
+
+int main() {
+    size_t n, m, a, b;
+    std::cin >> n;
+    std::vector<int> in(n);
+    for (int i = 0; i < n; ++i) std::cin >> in[i];
+    std::vector<std::vector<int>> graph(n + 1);
+    for (int i = 0; i < n; ++i) graph[in[i]].push_back(i + 1);
+    std::pair<std::vector<int>, std::vector<int>> t = dfs(graph);
+    std::cin >> m;
+    for (int i = 0; i < m; ++i) {
+        std::cin >> a >> b;
+        std::cout << ((t.first[a] < t.second[b]) && (t.second[a] > t.second[b]) ? 1 : 0) << '\n';
+    }
+    return 0;
+}
