@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+void dfs(size_t v, const std::vector<std::vector<int>>& graph, size_t& timer, std::vector<int>& color,
+         std::vector<int>& tin, std::vector<int>& ret, std::vector<int>& parent, std::vector<int>& cutPoints) {
+    color[v] = 1;
+    tin[v] = ++timer;
+    ret[v] = tin[v];
+    size_t numOfSons = 0;
+    bool isArtPoint = false;
+    for (auto i = graph[v].begin(); i != graph[v].end(); ++i) {
+        if (parent[v] == *i) continue;
+        if (color[*i] != 0) ret[v] = std::min(ret[v], tin[*i]);
+        else {
+            ++numOfSons;
+            parent[*i] = v;
+            dfs(*i, graph, timer, color, tin, ret, parent, cutPoints);
+            if (parent[v] != -1) ret[v] = std::min(ret[v], ret[*i]);
+            if (ret[*i] >= tin[v]) isArtPoint = true;
+        }
+    }
+    if (parent[v] == -1) isArtPoint = numOfSons > 1;
+    if (isArtPoint) cutPoints.push_back(v);
+}
+
+std::vector<int> findCutPoints(const std::vector<std::vector<int>>& graph) {
+    std::vector<int> color(graph.size(), 0);
+    std::vector<int> tin(graph.size(), -1);
+    std::vector<int> ret(graph.size(), 1e9);
+    std::vector<int> parent(graph.size(), -1);
+    std::vector<int> cutPoints;
+    size_t timer = 0;
+    for (int i = 0; i < graph.size(); ++i)
+        if (color[i] == 0) {
+            dfs(i, graph, timer, color, tin, ret, parent, cutPoints);
+        }
+    return cutPoints;
+}
+
+int main() {
+    size_t n, m, a, b;
+    std::cin >> n >> m;
+    std::vector<std::vector<int>> graph(n);
+    for (int i = 0; i < m; ++i) {
+        std::cin >> a >> b;
+        --a;
+        --b;
+        graph[a].push_back(b);
+        graph[b].push_back(a);
+    }
+    std::vector<int> cutPoints = findCutPoints(graph);
+
+    std::cout << cutPoints.size() << '\n';
+    std::sort(cutPoints.begin(), cutPoints.end());
+    for (int cutPoint : cutPoints) {
+        std::cout << cutPoint + 1 << ' ';
+    }
+    return 0;
+}
