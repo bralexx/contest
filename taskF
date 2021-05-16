@@ -3,27 +3,33 @@
 #include <vector>
 
 struct Node {
-    std::vector<std::pair<Node*, size_t>> edges;
+    std::vector<std::pair<size_t, size_t>> edges;
+};
+
+struct AlgoNode {
+    std::vector<std::pair<size_t, size_t>> edges;
     bool used = false;
     size_t dist = 1e9;
 };
 
 struct Comp {
-    bool operator()(const Node* t1, const Node* t2) const {
+    bool operator()(const AlgoNode* t1, const AlgoNode* t2) const {
         return t1->dist > t2->dist;
     }
 };
 
-std::vector<Node> dijkstra(std::vector<Node>& nodes, size_t start) {
-    std::priority_queue<Node*, std::vector<Node*>, Comp> queue;
+std::vector<AlgoNode> dijkstra(const std::vector<Node>& nodes_, size_t start) {
+    std::vector<AlgoNode> nodes(nodes_.size());
+    for (int i = 0; i < nodes_.size(); ++i) nodes[i].edges = nodes_[i].edges;
+    std::priority_queue<AlgoNode*, std::vector<AlgoNode*>, Comp> queue;
     queue.push(&nodes[start]);
     nodes[start].dist = 0;
     while (!queue.empty()) {
         auto top_node = queue.top();
         if (!top_node->used)
             for (auto edge : top_node->edges) {
-                edge.first->dist = std::min(edge.first->dist, top_node->dist + edge.second);
-                queue.push(edge.first);
+                nodes[edge.first].dist = std::min(nodes[edge.first].dist, top_node->dist + edge.second);
+                queue.push(&nodes[edge.first]);
             }
         top_node->used = true;
         queue.pop();
@@ -42,10 +48,10 @@ int main() {
         std::cin >> s >> e >> w;
         --s;
         --e;
-        nodes[s].edges.emplace_back(&nodes[e], w);
-        nodes[e].edges.emplace_back(&nodes[s], w);
+        nodes[s].edges.emplace_back(e, w);
+        nodes[e].edges.emplace_back(s, w);
     }
-    std::vector<Node> nodes_with_dist = dijkstra(nodes, start);
+    std::vector<AlgoNode> nodes_with_dist = dijkstra(nodes, start);
     if (nodes_with_dist[end].dist == 1e9) std::cout << -1;
     else std::cout << nodes_with_dist[end].dist;
 }
