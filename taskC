@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <assert.h>
+
+void findCycle(size_t v, size_t i, std::vector<size_t>& cycle, std::vector<size_t>& parent,
+               const std::vector<std::vector<size_t>>& graph) {
+    size_t u = v;
+    cycle = std::vector<size_t>(0);
+    while (u != i) {
+        cycle.push_back(u);
+        u = parent[u];
+    }
+    cycle.push_back(i);
+}
+
+void dfsOneVert(size_t v, const std::vector<std::vector<size_t>>& graph,
+                std::vector<size_t>& color,
+                std::vector<size_t>& cycle,
+                std::vector<size_t>& parent) {
+    if (!cycle.empty()) return;
+    color[v] = 1;
+    for (auto i = graph[v].begin(); i != graph[v].end(); ++i) {
+        if (color[*i] == 0) {
+            parent[*i] = v;
+            dfsOneVert(*i, graph, color, cycle, parent);
+        }
+        if (color[*i] == 1) {
+            findCycle(v, *i, cycle, parent, graph);
+        }
+    }
+    color[v] = 2;
+}
+
+std::vector<size_t> dfs(const std::vector<std::vector<size_t>>& graph) {
+    std::vector<size_t> cycle;
+    std::vector<size_t> parent(graph.size(), -1);
+    std::vector<size_t> color(graph.size(), 0);
+    for (size_t i = 0; i < graph.size(); ++i)
+        if (color[i] == 0 && cycle.empty())
+            dfsOneVert(i, graph, color, cycle, parent);
+    return cycle;
+}
+
+int main() {
+    size_t n, m, a, b;
+    std::cin >> n >> m;
+    std::vector<std::vector<size_t>> graph(n);
+    for (size_t i = 0; i < m; ++i) {
+        std::cin >> a >> b;
+        --a;
+        --b;
+        graph[a].push_back(b);
+    }
+    std::vector<size_t> cycle = dfs(graph);
+    if (cycle.empty()) std::cout << "NO";
+    else {
+        std::cout << "YES\n";
+        for (auto i = cycle.rbegin(); i != cycle.rend(); ++i) {
+            std::cout << *i + 1 << " ";
+        }
+    }
+    return 0;
+}
