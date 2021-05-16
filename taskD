@@ -4,17 +4,17 @@
 
 struct Node {
     std::vector<std::pair<size_t, long long>> edges;
-    bool inf_less = false;
-    long long dist = 1e18;
 };
 
-void dfs(std::vector<Node>& nodes, size_t node_num) {
-    if (nodes[node_num].inf_less) return;
-    nodes[node_num].inf_less = true;
-    for (auto edge : nodes[node_num].edges) dfs(nodes, edge.first);
+void dfs(const std::vector<Node>& nodes, size_t node_num, std::vector<bool>& inf_less, std::vector<long long>& dist) {
+    if (inf_less[node_num]) return;
+    inf_less[node_num] = true;
+    for (auto edge : nodes[node_num].edges) dfs(nodes, edge.first, inf_less, dist);
 }
 
-std::vector<Node> fordBellman(std::vector<Node> nodes, size_t start) {
+std::pair<std::vector<bool>, std::vector<long long>> fordBellman(const std::vector<Node>& nodes, size_t start) {
+    std::vector<bool> inf_less(nodes.size(), false);
+    std::vector<long long> dist(nodes.size(), 1e18);
     std::vector<std::vector<long long>> dp(nodes.size(), std::vector<long long>(nodes.size() + 1, 1e18));
     dp[start][0] = 0;
     for (size_t k = 0; k < nodes.size(); ++k)
@@ -24,10 +24,10 @@ std::vector<Node> fordBellman(std::vector<Node> nodes, size_t start) {
                 dp[edge.first][k + 1] = std::min(dp[edge.first][k + 1], dp[i][k] + edge.second);
         }
     for (size_t i = 0; i < nodes.size(); ++i) {
-        if (dp[i][nodes.size()] < dp[i][nodes.size() - 1] && dp[i][nodes.size()] < 1e17) dfs(nodes, i);
-        nodes[i].dist = dp[i][nodes.size() - 1];
+        if (dp[i][nodes.size()] < dp[i][nodes.size() - 1] && dp[i][nodes.size()] < 1e17) dfs(nodes, i, inf_less, dist);
+        dist[i] = dp[i][nodes.size() - 1];
     }
-    return nodes;
+    return {inf_less, dist};
 }
 
 int main() {
@@ -43,9 +43,9 @@ int main() {
         --e;
         nodes[s].edges.emplace_back(e, w);
     }
-    std::vector<Node> answer = fordBellman(nodes, start);
-    for (auto& node : answer)
-        if (node.inf_less) std::cout << "-\n";
-        else if (node.dist > 1e17) std::cout << "*\n";
-        else std::cout << node.dist << '\n';
+    std::pair<std::vector<bool>, std::vector<long long>> answer = fordBellman(nodes, start);
+    for (size_t i = 0; i < answer.first.size(); ++i)
+        if (answer.first[i]) std::cout << "-\n";
+        else if (answer.second[i] > 1e17) std::cout << "*\n";
+        else std::cout << answer.second[i] << '\n';
 }
