@@ -1,0 +1,88 @@
+#include <iostream>
+#include <vector>
+#include <list>
+
+
+template <typename T, typename U, typename hash=std::hash<T>>
+class HashTable {
+    std::vector<std::list<std::pair<T, U>>> vec;
+
+    typename std::list<std::pair<T, U>>::iterator find(const T& key) {
+        size_t hash_code = hash()(key) % vec.size();
+        for(auto i = vec[hash_code].begin(); i != vec[hash_code].end(); ++i) if((*i).first == key) return i;
+        return vec[0].end();
+    }
+public:
+    HashTable() {
+        vec = std::vector<std::list<std::pair<T, U>>>(1000003);
+    }
+
+    explicit HashTable(size_t capacity) {
+        vec = std::vector<std::list<std::pair<T, U>>>(capacity);
+    }
+
+    std::pair<T, U>& insert(const T& key, const U& value) {
+        auto it = find(key);
+        if(it == vec[0].end()) {
+            vec[hash()(key) % vec.size()].push_front({key, value});
+            it = vec[hash()(key) % vec.size()].begin();
+        }
+        else (*it).second = value;
+        return *it;
+    }
+
+    U* get_ptr(const T& key) {
+        auto it = find(key);
+        if(it == vec[0].end()) return nullptr;
+        return &((*it).second);
+    }
+
+    void del(const std::string& key) {
+        auto it = find(key);
+        if(it == vec[0].end()) return;
+        vec[hash()(key) % vec.size()].erase(it);
+    }
+
+    U& operator[](const T& key) {
+        auto it = find(key);
+        if(it == vec[0].end()) return insert(key, U()).second;
+        return (*it).second;
+    }
+
+    void rehash(size_t capacity) {
+        std::vector<std::list<std::pair<T, U>>> newVec(capacity);
+        for(auto list:vec) for(auto pair:list) newVec[hash()(pair.first)].push_front(pair);
+        vec = newVec;
+    }
+};
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::cout.tie();
+    long long W, H, N;
+    std::cin >> W >> H >> N;
+    if(W * H >= 5 * N) std::cout << "No\n";
+    else {
+        std::vector<HashTable<size_t, long long>> tab(W, HashTable<size_t, long long>(H));
+        long long x, y;
+        for(long long i = 0; i < N; ++i) {
+            std::cin >> x >> y;
+            --x;
+            --y;
+            if(x >= 0 && x < W && y >= 0 && y < H) tab[x][y] = 1;
+            if(x >= 1 && x < W + 1 && y >= 0 && y < H) tab[x - 1][y] = 1;
+            if(x >= 0 && x < W && y >= 1 && y < H + 1) tab[x][y - 1] = 1;
+            if(x >= -1 && x < W - 1 && y >= 0 && y < H) tab[x + 1][y] = 1;
+            if(x >= 0 && x < W && y >= -1 && y < H - 1) tab[x][y + 1] = 1;
+        }
+        for(x = 0; x < W; ++x)
+            for(y = 0; y < H; ++y)
+                if(tab[x][y] == 0) {
+                    std::cout << "No\n";
+                    x = W + 2;
+                    y = H + 2;
+                }
+        if(x <= W) std::cout << "Yes\n";
+    }
+}
