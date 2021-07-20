@@ -1,0 +1,610 @@
+#include <vector>
+#include <iostream>
+#include <string>
+#include <array>
+#include <assert.h>
+class BigInteger {
+    std::vector<long long> bigint;
+    int sign = 1;
+    const int bms = 1'000'000'000; //block max size
+
+    long long to_next(const size_t &i) {
+        long long tn = bigint[i] / bms;
+        if (bigint[i] < 0 && (bigint[i] % bms != 0)) --tn;
+        return tn;
+    }
+
+    void del_zero_blocks() {
+        size_t i = bigint.size() - 1;
+        while ((bigint[i] == 0) && (i != 0)) {
+            bigint.pop_back();
+            --i;
+        }
+    }
+
+    void update_block(size_t i) {
+        long long tn = to_next(i);
+        if (tn == 0) return;
+        if (i == bigint.size() - 1) bigint.push_back(tn);
+        else bigint[i + 1] += tn;
+        bigint[i] = bigint[i] - tn * bms;
+    }
+
+    void update_block(size_t i, int sn) {
+        long long tn = to_next(i);
+        if (tn == 0) return;
+        if (i == bigint.size() - 1) bigint.push_back(sn * tn);
+        else bigint[i + 1] += tn * sn;
+        bigint[i] = bigint[i] - tn * bms;
+    }
+
+    bool static abs_less(const BigInteger &t1, const BigInteger &t2) {
+        if (t1.bigint.size() < t2.bigint.size()) return true;
+        if (t1.bigint.size() > t2.bigint.size()) return false;
+        for (size_t i = t1.bigint.size() - 1;; --i) {
+            if (t1.bigint[i] < t2.bigint[i]) return true;
+            if (t1.bigint[i] > t2.bigint[i]) return false;
+            if (i == 0) return false;
+        }
+    }
+
+
+public:
+    friend std::istream &operator>>(std::istream &in, BigInteger &bi);
+
+    BigInteger abs() const {
+        BigInteger copy = *this;
+        copy.sign = 1;
+        return copy;
+    }
+
+    BigInteger(const BigInteger &t) {
+        sign = t.sign;
+        bigint = t.bigint;
+    }
+
+    BigInteger(const int &n = 0) {
+        bigint.push_back(n);
+        if (n < 0) {
+            sign = -1;
+            bigint[0] *= -1;
+        }
+        update_block(0);
+    }
+
+    BigInteger(std::string str) {
+        int i = 0;
+        if (str[0] == '-') {
+            i = 1;
+            sign = -1;
+        } else sign = 1;
+        long long num;
+        for (int j = (int) str.length() - 1; j >= i; j -= 9) {
+            num = 0;
+            if (j + 1 - i >= 9)
+                for (int k = 8; k >= 0; --k) {
+                    num *= 10;
+                    num += str[j - k] - '0';
+                }
+            else
+                for (; i <= j; ++i) {
+                    num *= 10;
+                    num += str[i] - '0';
+                }
+            bigint.push_back(num);
+        }
+        del_zero_blocks();
+        if ((bigint.size() == 1) && (bigint[0] == 0)) sign = 1;
+    }
+
+    ~BigInteger() {
+        bigint.clear();
+    }
+
+    BigInteger &operator=(const BigInteger &t) {
+        sign = t.sign;
+        bigint = t.bigint;
+        return *this;
+    }
+
+
+    BigInteger &operator+=(const BigInteger &t2) {
+        if (sign == -1) {
+            sign = 1;
+            *this -= t2;
+            if (!((bigint.size() == 1) && (bigint[0] == 0))) sign *= -1;
+            return *this;
+        }
+        {
+            size_t m = std::max(bigint.size(), t2.bigint.size());
+            int s = 1;
+            if (t2.sign == -1 && abs_less(*this, t2)) s = -1;
+            for (size_t i = 0; i < m; ++i) {
+                if (bigint.size() == i) bigint.push_back(0);
+                if (i < t2.bigint.size()) {
+                    bigint[i] += t2.sign * t2.bigint[i];
+                    bigint[i] *= s;
+                } else if ((bigint[i] < bms) && (bigint[i] >= 0)) i = m;
+                if (i != m)update_block(i, s);
+            }
+            sign *= s;
+            if ((bigint.size() == 1) && (bigint[0] == 0)) sign = 1;
+            del_zero_blocks();
+        }
+        return *this;
+    }
+
+    BigInteger &operator-=(const BigInteger &t2) {
+        if (sign == -1) {
+            sign = 1;
+            *this += t2;
+            if (!((bigint.size() == 1) && (bigint[0] == 0))) sign *= -1;
+            return *this;
+        }
+        size_t m = std::max(bigint.size(), t2.bigint.size());
+        int s = 1;
+        if (t2.sign == 1 && abs_less(*this, t2)) s = -1;
+        for (size_t i = 0; i < m; ++i) {
+            if (bigint.size() == i) bigint.push_back(0);
+            if (i < t2.bigint.size()) {
+                bigint[i] -= t2.sign * t2.bigint[i];
+                bigint[i] *= s;
+                update_block(i, s);
+            } else if ((bigint[i] < bms) && (bigint[i] >= 0)) i = m;
+            if (i != m)update_block(i, s);
+        }
+        sign *= s;
+        if ((bigint.size() == 1) && (bigint[0] == 0)) sign = 1;
+        del_zero_blocks();
+        return *this;
+    }
+
+    BigInteger &operator*=(const BigInteger& t) {
+        if (((bigint.size() == 1) && (bigint[0] == 0))||((t.bigint.size() == 1) && (t.bigint[0] == 0))) {
+            *this = 0;
+            return *this;
+        }
+        std::vector<long long> old_bigint = bigint;
+        bigint = std::vector<long long>(bigint.size() + t.bigint.size(), 0);
+        for (size_t i = 0; i < t.bigint.size(); ++i) {
+            for (size_t j = 0; j < old_bigint.size(); ++j) {
+                bigint[i + j] += t.bigint[i] * old_bigint[j];
+            }
+        }
+        for(size_t i = 0; i < bigint.size(); ++i) update_block(i);
+        del_zero_blocks();
+        sign = sign * t.sign;
+        return *this;
+    }
+
+    BigInteger& operator*= (const int& t2) {
+        if (t2 == 0 || ((bigint.size() == 1) && (bigint[0] == 0))) {
+            *this = 0;
+            return *this;
+        }
+        if(t2 == bms) {
+            bigint.push_back(0);
+            for(size_t i = bigint.size() - 1; i > 0; --i) bigint[i] = bigint[i - 1];
+            bigint[0] = 0;
+            return *this;
+        }
+        if(std::abs(t2) != 1) {
+            bigint.push_back(0);
+            for (size_t i = 0; i < bigint.size(); ++i) bigint[i] *= std::abs(t2);
+            for(size_t i = 0; i < bigint.size(); ++i) update_block(i);
+            del_zero_blocks();
+        }
+        if(t2 < 0) sign *= -1;
+        return *this;
+    }
+    BigInteger &operator/=(const BigInteger& div) {
+        if(div.bigint.size() == 1) return (*this /= (div.sign * div.bigint[0]));
+        if ((bigint.size() == 1) && (bigint[0] == 0)) {
+            sign = 1;
+            return *this;
+        }
+        BigInteger answer(0);
+        BigInteger num(0);
+        for (auto i = bigint.rbegin(); i != bigint.rend(); ++i) {
+            num *= bms;
+            num += *i;
+            int l = 0, r = bms;
+            if (!abs_less(num, div)) {
+                if(num.bigint.size() == div.bigint.size()) {
+                    l = (num.bigint.back() / (div.bigint.back() + 1));
+                    if(div.bigint.back() != 0) r = ((num.bigint.back() + 1) / (div.bigint.back())) + 1;
+                } else {
+                    l = ((num.bigint.back() * bms + num.bigint[num.bigint.size() - 2]) / (div.bigint.back() + 1));
+                    if(div.bigint.back() != 0) r = ((num.bigint.back() * bms + num.bigint[num.bigint.size() - 2] + 1) / (div.bigint.back())) + 1;
+                }
+                r = std::min(r, bms);
+                while (r - l > 1) {
+                    int mid = (r + l) / 2;
+                    if (abs_less(num, div * mid)) r = mid;
+                    else l = mid;
+                }
+            }
+            answer *= bms;
+            if (l > 0) {
+                answer += l;
+                num -= div.abs() * l;
+            }
+        }
+        answer.sign = sign * div.sign;
+        *this = answer;
+        return *this;
+    }
+
+    BigInteger &operator/=(long long div) {
+        if(div < 0) {
+            sign *= -1;
+            div *= -1;
+        }
+        if ((bigint.size() == 1) && (bigint[0] == 0)) {
+            sign = 1;
+            return *this;
+        }
+        for (size_t i = bigint.size() - 1; i > 0; --i) {
+            bigint[i - 1] += (bigint[i] % div) * bms;
+            bigint[i] /= div;
+        }
+        bigint[0] /= div;
+        del_zero_blocks();
+        return *this;
+    }
+
+    BigInteger &operator%=(const BigInteger &div) {
+        BigInteger copy = *this;
+        copy /= div;
+        copy *= div;
+        *this -= copy;
+        return *this;
+    }
+
+    BigInteger operator*(const BigInteger &t2) const {
+        BigInteger copy(0);
+        copy = *this;
+        copy *= t2;
+        return copy;
+    }
+
+    BigInteger operator-() const {
+        BigInteger copy = *this;
+        if ((bigint.size() == 1) && (bigint[0] == 0)) return copy;
+        copy.sign *= -1;
+        return copy;
+    }
+
+    BigInteger &operator++() {
+        *this += 1;
+        return *this;
+    }
+
+    BigInteger operator++(int) {
+        BigInteger copy = *this;
+        ++(*this);
+        return copy;
+    }
+
+    BigInteger &operator--() {
+        *this -= 1;
+        return *this;
+    }
+
+    BigInteger operator--(int) {
+        BigInteger copy = *this;
+        --(*this);
+        return copy;
+    }
+
+    bool operator==(const BigInteger &t) const {
+        if (sign != t.sign) return false;
+        if (bigint.size() != t.bigint.size()) return false;
+        for (size_t i = 0; i < bigint.size(); ++i) {
+            if (bigint[i] != t.bigint[i]) return false;
+        }
+        return true;
+    }
+
+    bool operator<(const BigInteger &t) const {
+        if (sign < t.sign) return true;
+        if (sign > t.sign) return false;
+        if (sign == 1) return abs_less(*this, t);
+        if (sign == -1) return abs_less(t, *this);
+        return false;
+    }
+
+    bool operator>(const BigInteger &t) const {
+        return !((*this == t) || (*this < t));
+    }
+
+    bool operator<=(const BigInteger &t) const {
+        return !(*this > t);
+    }
+
+    bool operator>=(const BigInteger &t) const {
+        return !(*this < t);
+    }
+
+    bool operator!=(const BigInteger &t) const {
+        return !(*this == t);
+    }
+
+    std::string toString() const {
+        std::string str;
+        str = "";
+        std::string str2;
+        if (sign == -1 && ((bigint.size() != 1) || (bigint[0] != 0))) str += '-';
+        str += std::to_string(bigint[bigint.size() - 1]);
+        for (int i = (int) bigint.size() - 2; i >= 0; --i) {
+            str2 = std::to_string(bigint[i]);
+            for (int j = 0; j < 9 - (int) str2.length(); ++j) str += '0';
+            str += str2;
+        }
+        return str;
+    }
+
+    explicit operator bool() const {
+        if ((*this) == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    BigInteger static nod(BigInteger t1, BigInteger t2) {
+        if(t1 == 0) return t2.abs();
+        if(t1.sign < 0) t1.sign *= -1;
+        if(t2.sign < 0) t2.sign *= -1;
+        BigInteger gtc = 1;
+        while(t1 != t2) {
+            if(t1 < t2) t2 -= t1;
+            else t1 -= t2;
+            while(t1.bigint[0] % 2 == 0 && t2.bigint[0] % 2 == 0) {
+                gtc *= 2;
+                t1 /= 2;
+                t2 /= 2;
+            }
+            while(t1.bigint[0] % 2 == 0 && t1 != 0) t1 /= 2;
+            while(t2.bigint[0] % 2 == 0) t2 /= 2;
+        }
+        return (gtc * t2);
+    }
+};
+
+BigInteger operator+(const BigInteger &t1, const BigInteger &t2) {
+    BigInteger copy = t1;
+    copy += t2;
+    return copy;
+}
+
+BigInteger operator-(const BigInteger &t1, const BigInteger &t2) {
+    BigInteger copy = t1;
+    copy -= t2;
+    return copy;
+}
+
+BigInteger operator/(const BigInteger &t1, const BigInteger &t2) {
+    BigInteger copy = t1;
+    copy /= t2;
+    return copy;
+}
+
+BigInteger operator%(const BigInteger &t1, const BigInteger &t2) {
+    BigInteger copy = t1;
+    copy %= t2;
+    return copy;
+}
+
+BigInteger operator*(const int &t1, const BigInteger &t2) {
+    BigInteger copy(t2);
+    copy *= t1;
+    return copy;
+}
+
+BigInteger operator*(const BigInteger &t1, const int &t2) {
+    BigInteger copy(t1);
+    copy *= t2;
+    return copy;
+}
+
+std::ostream &operator<<(std::ostream &out, const BigInteger &bi) {
+    out << bi.toString();
+    return out;
+}
+
+std::istream &operator>>(std::istream &in, BigInteger &bi) {
+    bi.bigint.clear();
+    std::string str;
+    in >> str;
+    bi = BigInteger(str);
+    return in;
+}
+
+BigInteger operator "" _bi(const unsigned long long t) {
+    return BigInteger((int) t);
+}
+
+class Rational {
+    BigInteger num;
+    BigInteger den = 1;
+
+    void abs_den() {
+        if (den < 0) {
+            num *= -1;
+            den *= -1;
+        }
+    }
+
+    void reduce() {
+        BigInteger nod_num_den = BigInteger::nod(num, den);
+        num /= nod_num_den;
+        den /= nod_num_den;
+        abs_den();
+    }
+
+public:
+    friend std::istream &operator>>(std::istream &in, Rational &t);
+    Rational(const BigInteger &bi) {
+        num = bi;
+    }
+
+    Rational(const int &t = 0) {
+        num = t;
+        den = 1;
+    }
+
+    Rational &operator+=(const Rational &t) {
+        BigInteger num2 = t.num * den;
+        den *= t.den;
+        num *= t.den;
+        num += num2;
+        reduce();
+        return *this;
+    }
+
+    Rational &operator-=(const Rational &t) {
+        BigInteger num2 = t.num * den;
+        den *= t.den;
+        num *= t.den;
+        num -= num2;
+        reduce();
+        return *this;
+    }
+
+    Rational &operator*=(const Rational &t) {
+        den *= t.den;
+        num *= t.num;
+        reduce();
+        return *this;
+    }
+
+    Rational &operator/=(const Rational &t) {
+        den *= t.num;
+        num *= t.den;
+        abs_den();
+        reduce();
+        return *this;
+    }
+
+    Rational operator-() {
+        return Rational(num * (-1));
+    }
+
+    bool operator<(const Rational &t2) const {
+        if (num < 0 && t2.num > 0) return true;
+        if (num > 0 && t2.num < 0) return false;
+        if (den == t2.den) return num < t2.num;
+        return (num * t2.den) < (t2.num * den);
+    }
+
+    bool operator==(const Rational &t2) const {
+        return (num == t2.num) && (den == t2.den);
+    }
+
+    bool operator>(const Rational &t2) const {
+        return !(*this < t2 && *this == t2);
+    }
+
+    bool operator<=(const Rational &t2) const {
+        return !(*this > t2);
+    }
+
+    bool operator>=(const Rational &t2) const {
+        return !(*this < t2);
+    }
+
+    bool operator!=(const Rational &t2) const {
+        return !(*this == t2);
+    }
+
+    std::string toString() const {
+        std::string str = num.toString();
+        if (den != 1) {
+            str += '/';
+            str += den.toString();
+        }
+        return str;
+    }
+
+    std::string asDecimal(size_t precision = 0) const {
+        if (den == 1) return num.toString();
+        std::string result;
+        result = "";
+        BigInteger dec = num / den;
+        if (num < 0) {
+            result += '-';
+            dec = dec.abs();
+        }
+        result += dec.toString();
+        dec = num.abs() % den;
+        if ((precision != 0) && (dec != 0)) {
+            result += '.';
+            size_t i = 0;
+            if (precision > 9) for (; i < precision - 9; i += 9) dec *= 1'000'000'000;
+            for (; i < precision; ++i) dec *= 10;
+            dec /= den;
+            std::string str = dec.toString();
+            for (i = 0; i < (precision - str.length()); ++i) result += '0';
+            result += str;
+            for (i = result.length() - 1; result[i] == '0'; --i) result.pop_back();
+        }
+        return result;
+    }
+
+    explicit operator double() const {
+        std::string str = asDecimal(1000);
+        double d = std::stod(str);
+        return d;
+    }
+};
+
+Rational operator+(const Rational &t1, const Rational &t2) {
+    Rational result = t1;
+    result += t2;
+    return result;
+}
+
+Rational operator-(const Rational &t1, const Rational &t2) {
+    Rational result = t1;
+    result -= t2;
+    return result;
+}
+
+Rational operator*(const Rational &t1, const Rational &t2) {
+    Rational result = t1;
+    result *= t2;
+    return result;
+}
+
+Rational operator/(const Rational &t1, const Rational &t2) {
+    Rational result = t1;
+    result /= t2;
+    return result;
+}
+
+std::istream &operator>>(std::istream &in, Rational &t) {
+    std::string str_num;
+    std::string str_den;
+    std::string str;
+    in >> str;
+    auto c = str.begin();
+    bool after_point = false;
+    while(c != str.end()) {
+        if(*c != '.') str_num.push_back(*c);
+        else {
+            after_point = true;
+            str_den.push_back('1');
+        }
+        if(after_point) str_den.push_back('0');
+        ++c;
+    }
+    t.num = BigInteger(str_num);
+    t.den = BigInteger(str_den);
+    t.reduce();
+    return in;
+}
+
+std::ostream& operator<<(std::ostream& out, const Rational& t) {
+    out << t.toString();
+    return out;
+}
