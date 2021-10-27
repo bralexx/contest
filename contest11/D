@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <map>
+
+struct Node {
+    Node* parent;
+    int term_down = 0;
+    int term = 0;
+    std::map<char, Node*> sons;
+
+    Node(Node* ptr) : parent(ptr) {}
+};
+
+int main() {
+    std::string s;
+    std::cin >> s;
+    Node* root = new Node(nullptr);
+    for (int i = 0; i < s.size();) {
+        while (i < s.size() && s[i] == '.')++i;
+        if (i == s.size())break;
+        Node* ptr = root;
+        while (i < s.size() && s[i] != '.') {
+            ptr->term_down += 1;
+            if (ptr->sons.find(s[i]) == ptr->sons.end()) ptr->sons[s[i]] = new Node(ptr);
+            ptr = ptr->sons[s[i]];
+            ++i;
+        }
+        ptr->term_down += 1;
+        ptr->term += 1;
+    }
+
+    std::string ans;
+    for (int i = 0; i < s.size();) {
+        Node* ptr = root;
+        while (i < s.size() && s[i] == '.') {
+            ++i;
+            ans += '.';
+        }
+        if (i == s.size()) break;
+        while (i < s.size() && s[i] != '.') { ++i; }
+        while (ptr->term == 0) {
+            ptr->term_down -= 1;
+            auto it = ptr->sons.begin();
+            for (; it != ptr->sons.end() && it->second->term_down == 0; it = ptr->sons.begin()) {
+                ptr->sons.erase(it);
+            }
+            ans.push_back(it->first);
+            ptr = it->second;
+        }
+        ptr->term -= 1;
+        ptr->term_down -= 1;
+    }
+    std::cout << ans << std::endl;
+    return 0;
+}
