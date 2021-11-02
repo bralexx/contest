@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <map>
+
+class Trie {
+    struct Node {
+        int termInSubtrie = 0;
+        int term = 0;
+        std::map<char, Node*> sons;
+    };
+    Node* root;
+public:
+    Trie(const std::string& str) {
+        root = new Node();
+        for (int i = 0; i < str.size();) {
+            while (i < str.size() && str[i] == '.')
+                ++i;
+            if (i == str.size())
+                break;
+            Node* ptr = root;
+            while (i < str.size() && str[i] != '.') {
+                ptr->termInSubtrie += 1;
+                if (ptr->sons.find(str[i]) == ptr->sons.end())
+                    ptr->sons[str[i]] = new Node();
+                ptr = ptr->sons[str[i]];
+                ++i;
+            }
+            ptr->termInSubtrie += 1;
+            ptr->term += 1;
+        }
+    }
+
+    std::string getSorted(const std::string& str) {
+        std::string ans;
+        for (int i = 0; i < str.size();) {
+            Node* ptr = root;
+            while (i < str.size() && str[i] == '.') {
+                ++i;
+                ans += '.';
+            }
+            if (i == str.size())
+                break;
+            while (i < str.size() && str[i] != '.')
+                ++i;
+            while (ptr->term == 0) {
+                ptr->termInSubtrie -= 1;
+                auto it = ptr->sons.begin();
+                for (; it != ptr->sons.end() && it->second->termInSubtrie == 0; it = ptr->sons.begin()) {
+                    ptr->sons.erase(it);
+                }
+                ans.push_back(it->first);
+                ptr = it->second;
+            }
+            ptr->term -= 1;
+            ptr->termInSubtrie -= 1;
+        }
+    }
+};
+
+int main() {
+    std::string str;
+    std::cin >> str;
+    Trie trie(str);
+    std::string ans = trie.getSorted(str);
+    std::cout << ans << std::endl;
+    return 0;
+}
