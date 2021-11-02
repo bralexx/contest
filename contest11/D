@@ -4,64 +4,64 @@
 
 class Trie {
     struct Node {
-        int term_down = 0;
+        int termInSubtrie = 0;
         int term = 0;
         std::map<char, Node*> sons;
     };
     Node* root;
 public:
-    Trie(const std::string& s) {
+    Trie(const std::string& str) {
         root = new Node();
-        for (int i = 0; i < s.size();) {
-            while (i < s.size() && s[i] == '.')
+        for (int i = 0; i < str.size();) {
+            while (i < str.size() && str[i] == '.')
                 ++i;
-            if (i == s.size())
+            if (i == str.size())
                 break;
             Node* ptr = root;
-            while (i < s.size() && s[i] != '.') {
-                ptr->term_down += 1;
-                if (ptr->sons.find(s[i]) == ptr->sons.end())
-                    ptr->sons[s[i]] = new Node();
-                ptr = ptr->sons[s[i]];
+            while (i < str.size() && str[i] != '.') {
+                ptr->termInSubtrie += 1;
+                if (ptr->sons.find(str[i]) == ptr->sons.end())
+                    ptr->sons[str[i]] = new Node();
+                ptr = ptr->sons[str[i]];
                 ++i;
             }
-            ptr->term_down += 1;
+            ptr->termInSubtrie += 1;
             ptr->term += 1;
         }
     }
 
-    std::string getSorted(const std::string& s) {
+    std::string getSorted(const std::string& str) {
         std::string ans;
-        for (int i = 0; i < s.size();) {
+        for (int i = 0; i < str.size();) {
             Node* ptr = root;
-            while (i < s.size() && s[i] == '.') {
+            while (i < str.size() && str[i] == '.') {
                 ++i;
                 ans += '.';
             }
-            if (i == s.size())
+            if (i == str.size())
                 break;
-            while (i < s.size() && s[i] != '.')
+            while (i < str.size() && str[i] != '.')
                 ++i;
             while (ptr->term == 0) {
-                ptr->term_down -= 1;
+                ptr->termInSubtrie -= 1;
                 auto it = ptr->sons.begin();
-                for (; it != ptr->sons.end() && it->second->term_down == 0; it = ptr->sons.begin()) {
+                for (; it != ptr->sons.end() && it->second->termInSubtrie == 0; it = ptr->sons.begin()) {
                     ptr->sons.erase(it);
                 }
                 ans.push_back(it->first);
                 ptr = it->second;
             }
             ptr->term -= 1;
-            ptr->term_down -= 1;
+            ptr->termInSubtrie -= 1;
         }
     }
 };
 
 int main() {
-    std::string s;
-    std::cin >> s;
-    Trie trie(s);
-    std::string ans = trie.getSorted(s);
+    std::string str;
+    std::cin >> str;
+    Trie trie(str);
+    std::string ans = trie.getSorted(str);
     std::cout << ans << std::endl;
     return 0;
 }
