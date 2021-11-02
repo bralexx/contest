@@ -16,13 +16,13 @@ class Trie {
         std::vector<int> term;
         Node* suf;
         Node* parent;
-        int parent_char;
+        int parentChar;
         std::vector<Node*> move;
         std::vector<Node*> edges;
-        bool is_unterminating = false;
+        bool isUnterminating = false;
         Color dfsColor = RED;
 
-        Node(Node* parent_, int parent_char_) : parent(parent_), parent_char(parent_char_) {
+        Node(Node* parent_, int parent_char_) : parent(parent_), parentChar(parent_char_) {
             move = std::vector<Node*>(alphabet, nullptr);
             edges = std::vector<Node*>(alphabet, nullptr);
         }
@@ -35,37 +35,47 @@ class Trie {
         root->suf = root;
         for (int i = 0; i < alphabet; ++i) {
             root->move[i] = root;
-            if (root->edges[i] != nullptr) queue.push(root->edges[i]);
+            if (root->edges[i] != nullptr)
+                queue.push(root->edges[i]);
         }
         while (!queue.empty()) {
             Node* ptr = queue.front();
             queue.pop();
-            ptr->suf = ptr->parent->move[ptr->parent_char];
-            for (auto i:ptr->suf->term) ptr->term.push_back(i);
+            ptr->suf = ptr->parent->move[ptr->parentChar];
+            for (auto i:ptr->suf->term)
+                ptr->term.push_back(i);
             for (int j = 0; j < alphabet; ++j) {
-                if (ptr->suf->edges[j]) ptr->move[j] = ptr->suf->edges[j]; else ptr->move[j] = ptr->suf->move[j];
-                if (ptr->edges[j] != nullptr) queue.push(ptr->edges[j]);
+                if (ptr->suf->edges[j])
+                    ptr->move[j] = ptr->suf->edges[j];
+                else
+                    ptr->move[j] = ptr->suf->move[j];
+                if (ptr->edges[j] != nullptr)
+                    queue.push(ptr->edges[j]);
             }
         }
     }
 
     void markNotTerminatingVert(Node* node) {
         node->dfsColor = RED;
-        node->is_unterminating = true;
+        node->isUnterminating = true;
         for (int i = 0; i < alphabet; ++i)
-            if (node->edges[i] && node->edges[i]->term.empty())markNotTerminatingVert(node->edges[i]);
+            if (node->edges[i] && node->edges[i]->term.empty())
+                markNotTerminatingVert(node->edges[i]);
     }
 
     bool consistNotTerminatingLoop(Node* node) {
         if (node->dfsColor == 1)
             return true;
-        else if (node->dfsColor == 2) return false;
+        else if (node->dfsColor == 2)
+            return false;
         node->dfsColor = GREEN;
         for (int i = 0; i < alphabet; ++i)
             if (node->edges[i]) {
-                if (node->edges[i]->is_unterminating && consistNotTerminatingLoop(node->edges[i])) return true;
+                if (node->edges[i]->isUnterminating && consistNotTerminatingLoop(node->edges[i]))
+                    return true;
             } else {
-                if (node->move[i]->is_unterminating && consistNotTerminatingLoop(node->move[i])) return true;
+                if (node->move[i]->isUnterminating && consistNotTerminatingLoop(node->move[i]))
+                    return true;
             }
         node->dfsColor = BLUE;
         return false;
@@ -82,7 +92,8 @@ public:
             std::vector<int> str = charVector[str_num];
             Node* cur = root;
             for (int i = 0; i < str.size(); ++i) {
-                if (cur->edges[str[i]] == nullptr) cur->edges[str[i]] = new Node(cur, str[i]);
+                if (cur->edges[str[i]] == nullptr)
+                    cur->edges[str[i]] = new Node(cur, str[i]);
                 cur = cur->edges[str[i]];
             }
             cur->term.push_back(str_num);
@@ -101,7 +112,8 @@ int main() {
     std::cin >> n;
     std::vector<std::string> str(n);
 
-    for (auto& c:str) std::cin >> c;
+    for (auto& c:str)
+        std::cin >> c;
 
     Trie<2, '0'> trie(str);
     std::cout << (trie.consistNotTerminatingLoop() ? "TAK" : "NIE");
