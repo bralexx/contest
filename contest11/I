@@ -13,7 +13,8 @@ std::vector<int> getZFunction(const std::string& str) {
         else {
             zBiggest = i;
             zBorder = std::max(i - 1, zBorder);
-            while (zBorder < str.size() && str[zBorder + 1] == str[zBorder - i + 1])++zBorder;
+            while (zBorder < str.size() && str[zBorder + 1] == str[zBorder - i + 1])
+                ++zBorder;
             z.push_back(zBorder - i + 1);
         }
     }
