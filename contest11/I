@@ -1,23 +1,29 @@
 #include <iostream>
 #include <vector>
 
-int main() {
-    std::string s;
-    std::cin >> s;
-
-    if(s.empty()) {std::cout<<0;return 0;}
-    int z_biggest = 0;
-    int z_border=-1;
-    std::vector<int> z(1,0);
-    for(int i=1;i<s.size();++i) {
-        if(i<=z_border&&i+z[i-z_biggest]-1<z_border) z.push_back(z[i-z_biggest]);
+std::vector<int> getZFunction(const std::string& str) {
+    if (str.empty())
+        return {0};
+    int zBiggest = 0;
+    int zBorder = -1;
+    std::vector<int> z(1, 0);
+    for (int i = 1; i < str.size(); ++i) {
+        if (i <= zBorder && i + z[i - zBiggest] - 1 < zBorder)
+            z.push_back(z[i - zBiggest]);
         else {
-            z_biggest=i;
-            z_border=std::max(i-1,z_border);
-            while(z_border<s.size()&&s[z_border+1]==s[z_border-i+1])++z_border;
-            z.push_back(z_border-i+1);
+            zBiggest = i;
+            zBorder = std::max(i - 1, zBorder);
+            while (zBorder < str.size() && str[zBorder + 1] == str[zBorder - i + 1])++zBorder;
+            z.push_back(zBorder - i + 1);
         }
     }
-    for(auto i:z) std::cout << i << ' ';
+    return z;
+}
+
+int main() {
+    std::string str;
+    std::cin >> str;
+    std::vector<int> z = getZFunction(str);
+    for (auto i:z) std::cout << i << ' ';
     return 0;
 }
