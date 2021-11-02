@@ -6,6 +6,12 @@
 
 template<int alphabet, char alphabet_first>
 class Trie {
+    enum Color {
+        RED,
+        GREEN,
+        BLUE
+    };
+
     struct Node {
         std::vector<int> term;
         Node* suf;
@@ -14,7 +20,7 @@ class Trie {
         std::vector<Node*> move;
         std::vector<Node*> edges;
         bool is_unterminating = false;
-        int dfsColor = 0;
+        Color dfsColor = RED;
 
         Node(Node* parent_, int parent_char_) : parent(parent_), parent_char(parent_char_) {
             move = std::vector<Node*>(alphabet, nullptr);
@@ -24,7 +30,7 @@ class Trie {
 
     Node* root;
 
-    void make_aho_corasick_trie() {
+    void makeAhoCorasickTrie() {
         std::queue<Node*> queue;
         root->suf = root;
         for (int i = 0; i < alphabet; ++i) {
@@ -44,7 +50,7 @@ class Trie {
     }
 
     void markNotTerminatingVert(Node* node) {
-        node->dfsColor = 0;
+        node->dfsColor = RED;
         node->is_unterminating = true;
         for (int i = 0; i < alphabet; ++i)
             if (node->edges[i] && node->edges[i]->term.empty())markNotTerminatingVert(node->edges[i]);
@@ -54,26 +60,26 @@ class Trie {
         if (node->dfsColor == 1)
             return true;
         else if (node->dfsColor == 2) return false;
-        node->dfsColor = 1;
+        node->dfsColor = GREEN;
         for (int i = 0; i < alphabet; ++i)
             if (node->edges[i]) {
                 if (node->edges[i]->is_unterminating && consistNotTerminatingLoop(node->edges[i])) return true;
             } else {
                 if (node->move[i]->is_unterminating && consistNotTerminatingLoop(node->move[i])) return true;
             }
-        node->dfsColor = 2;
+        node->dfsColor = BLUE;
         return false;
     }
 
 public:
-    Trie(const std::vector<std::string>& s0) {
-        std::vector<std::vector<int>> s(s0.size());
-        for (int i = 0; i < s0.size(); ++i)
-            for (int j = 0; j < s0[i].size(); ++j)
-                s[i].push_back(s0[i][j] - alphabet_first);
+    Trie(const std::vector<std::string>& str) {
+        std::vector<std::vector<int>> charVector(str.size());
+        for (int i = 0; i < str.size(); ++i)
+            for (int j = 0; j < str[i].size(); ++j)
+                charVector[i].push_back(str[i][j] - alphabet_first);
         root = new Node(nullptr, -1);
-        for (int str_num = 0; str_num < s.size(); ++str_num) {
-            std::vector<int> str = s[str_num];
+        for (int str_num = 0; str_num < charVector.size(); ++str_num) {
+            std::vector<int> str = charVector[str_num];
             Node* cur = root;
             for (int i = 0; i < str.size(); ++i) {
                 if (cur->edges[str[i]] == nullptr) cur->edges[str[i]] = new Node(cur, str[i]);
@@ -81,7 +87,7 @@ public:
             }
             cur->term.push_back(str_num);
         }
-        make_aho_corasick_trie();
+        makeAhoCorasickTrie();
     }
 
     bool consistNotTerminatingLoop() {
@@ -93,11 +99,11 @@ public:
 int main() {
     int n;
     std::cin >> n;
-    std::vector<std::string> s(n);
+    std::vector<std::string> str(n);
 
-    for (auto& i:s) std::cin >> i;
+    for (auto& c:str) std::cin >> c;
 
-    Trie<2, '0'> trie(s);
+    Trie<2, '0'> trie(str);
     std::cout << (trie.consistNotTerminatingLoop() ? "TAK" : "NIE");
 
     return 0;
