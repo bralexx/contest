@@ -1,0 +1,83 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+template<size_t alphabetSize>
+class SufAuto {
+    struct Node {
+        std::vector<int> edges = std::vector<int>(alphabetSize, -1);
+        int link = -1;
+        int len = -1;
+        bool term = false;
+    };
+    std::vector<Node*> nodes;
+    int last;
+public:
+    void addChar(int c) {
+        nodes.push_back(new Node());
+        nodes.back()->len = nodes[last]->len + 1;
+        int l = last;
+        last = nodes.size() - 1;
+        while (l != -1 && nodes[l]->edges[c] == -1) {
+            nodes[l]->edges[c] = nodes.size() - 1;
+            l = nodes[l]->link;
+        }
+        if (l == -1) {
+            nodes.back()->link = 0;
+        } else {
+            int q = nodes[l]->edges[c];
+            if (nodes[q]->len != nodes[l]->len + 1) {
+                nodes.back()->link = nodes.size();
+                nodes.push_back(new Node(*nodes[q]));
+                nodes.back()->len = nodes[l]->len + 1;
+                nodes[q]->link = nodes.size() - 1;
+                while (l != -1 && nodes[l]->edges[c] == q) {
+                    nodes[l]->edges[c] = nodes.size() - 1;
+                    l = nodes[l]->link;
+                }
+            } else
+                nodes.back()->link = nodes[l]->edges[c];
+        }
+    }
+
+    void addStr(const std::vector<int>& str) {
+        for (auto c:str) 
+            addChar(c);
+    }
+
+    SufAuto() {
+        nodes.push_back(new Node());
+        nodes[0]->len = 0;
+        nodes[0]->link = -1;
+        last = 0;
+    }
+
+
+    bool* read(const std::vector<int>& s) {
+        int cur = 0;
+        for (auto c:s)
+            if (nodes[cur]->edges[c] == -1)
+                return nullptr;
+            else
+                cur = nodes[cur]->edges[c];
+        return &nodes[cur]->term;
+    }
+};
+
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    char type;
+    std::string s;
+    SufAuto<27> sa;
+    while (std::cin >> type >> s) {
+        std::vector<int> ss;
+        for (auto c:s) ss.push_back(c >= 'a' ? c - 'a' + 1 : c - 'A' + 1);
+        if (type == '?') std::cout << (sa.read(ss) ? "YES\n" : "NO\n");
+        if (type == 'A') {
+            sa.addStr(ss);
+        }
+    }
+    return 0;
+}
