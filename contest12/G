@@ -13,30 +13,30 @@ class SufAuto {
     std::vector<Node*> nodes;
     int last;
 public:
-    void addChar(int c) {
+    void addChar(int newChar) {
         nodes.push_back(new Node());
         nodes.back()->len = nodes[last]->len + 1;
-        int node = last;
+        int current = last;
         last = nodes.size() - 1;
-        while (node != -1 && nodes[node]->edges[c] == -1) {
-            nodes[node]->edges[c] = nodes.size() - 1;
-            node = nodes[node]->link;
+        while (current != -1 && nodes[current]->edges[newChar] == -1) {
+            nodes[current]->edges[newChar] = nodes.size() - 1;
+            current = nodes[current]->link;
         }
-        if (node == -1) {
+        if (current == -1) {
             nodes.back()->link = 0;
         } else {
-            int q = nodes[node]->edges[c];
-            if (nodes[q]->len != nodes[node]->len + 1) {
+            int next = nodes[current]->edges[newChar];
+            if (nodes[next]->len != nodes[current]->len + 1) {
                 nodes.back()->link = nodes.size();
-                nodes.push_back(new Node(*nodes[q]));
-                nodes.back()->len = nodes[node]->len + 1;
-                nodes[q]->link = nodes.size() - 1;
-                while (node != -1 && nodes[node]->edges[c] == q) {
-                    nodes[node]->edges[c] = nodes.size() - 1;
-                    node = nodes[node]->link;
+                nodes.push_back(new Node(*nodes[next]));
+                nodes.back()->len = nodes[current]->len + 1;
+                nodes[next]->link = nodes.size() - 1;
+                while (current != -1 && nodes[current]->edges[newChar] == next) {
+                    nodes[current]->edges[newChar] = nodes.size() - 1;
+                    current = nodes[current]->link;
                 }
             } else
-                nodes.back()->link = nodes[node]->edges[c];
+                nodes.back()->link = nodes[current]->edges[newChar];
         }
     }
 
@@ -74,7 +74,7 @@ int main() {
     SufAuto<alphabet_size> sa;
     while (std::cin >> type >> s) {
         std::vector<int> ss;
-        for (auto c:s) 
+        for (auto c:s)
             ss.push_back(c >= 'a' ? c - 'a' + 1 : c - 'A' + 1);
         if (type == '?') {
             std::cout << (sa.read(ss) ? "YES\n" : "NO\n");
