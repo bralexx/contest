@@ -8,9 +8,9 @@ struct sufMassElement {
 };
 void countSort(std::vector<sufMassElement>& vec, int maxClassNum) {
     std::vector<int> counter(maxClassNum, 0);
-    for (auto& i:vec) 
+    for (auto& i:vec)
         ++counter[i.classNum];
-    for (int i = 1; i < counter.size(); ++i) 
+    for (int i = 1; i < counter.size(); ++i)
         counter[i] += counter[i - 1];
     std::vector<sufMassElement> newVec(vec.size());
     for (int i = vec.size() - 1; i >= 0; --i)
@@ -18,20 +18,20 @@ void countSort(std::vector<sufMassElement>& vec, int maxClassNum) {
     vec = newVec;
 }
 
-std::vector<int> getSufMass(std::string s) {
+std::vector<int> getSufMass(std::string s, int alphabetSize) {
     s.push_back('a' - 1);
     std::vector<sufMassElement> sufMass;
     std::vector<int> sufPos(s.length());
-    for (int i = 0; i < s.length(); ++i) 
+    for (int i = 0; i < s.length(); ++i)
         sufMass.push_back({i, s[i] - 'a' + 1});
-    countSort(sufMass, 27);
-    for (int i = 0; i < s.length(); ++i) 
+    countSort(sufMass, alphabetSize);
+    for (int i = 0; i < s.length(); ++i)
         sufPos[sufMass[i].strIndex] = i;
-    int classNum = 27;
+    int classNum = alphabetSize;
 
     for (int l = 1; l < s.length(); l *= 2) {
         std::vector<int> secondClasses(s.length()), oldClasses(s.length());
-        for (int i = 0; i < s.length(); ++i) 
+        for (int i = 0; i < s.length(); ++i)
             oldClasses[i] = sufMass[i].classNum;
         for (auto& i:sufMass) {
             i.strIndex += s.length() - l;
@@ -42,28 +42,32 @@ std::vector<int> getSufMass(std::string s) {
         countSort(sufMass, classNum);
         classNum = 1;
         sufMass[0].classNum = 0;
-        for (int i = 0; i < s.length(); ++i) 
-            oldClasses[i] = sufMass[i].classNum;
         for (int i = 0; i < s.length(); ++i)
+            oldClasses[i] = sufMass[i].classNum;
+        for (int i = 0; i < s.length(); ++i) {
             if (oldClasses[i] == oldClasses[i - 1] &&
                 secondClasses[sufMass[i].strIndex] == secondClasses[sufMass[i - 1].strIndex])
                 sufMass[i].classNum = sufMass[i - 1].classNum;
             else
                 sufMass[i].classNum = classNum++;
-        for (int i = 0; i < s.length(); ++i) 
+        }
+        for (int i = 0; i < s.length(); ++i)
             sufPos[sufMass[i].strIndex] = i;
     }
     std::vector<int> realSufMass;
-    for (auto& i:sufMass) 
-        if (i.strIndex != s.length() - 1) 
+    for (auto& i:sufMass){
+        if (i.strIndex != s.length() - 1)
             realSufMass.push_back(i.strIndex);
+    }
     return realSufMass;
 }
 
 int main() {
+    int alphabetSize = 27;
     std::string s;
     std::cin >> s;
-    auto sufMass = getSufMass(s);
-    for (auto& i:sufMass) std::cout << i + 1 << ' ';
+    auto sufMass = getSufMass(s, alphabetSize);
+    for (auto& i:sufMass)
+        std::cout << i + 1 << ' ';
     return 0;
 }
