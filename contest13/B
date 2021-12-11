@@ -1,0 +1,20 @@
+#include <iostream>
+#include <vector>
+
+int main() {
+    int n;
+    std::cin >> n;
+    std::vector<int> sieve(n + 1, 0);
+    for (int prime = 2; prime <= n; ++prime) {
+        while (sieve[prime] != 0)
+            ++prime;
+        for (int number = prime * 2; number <= n; number += prime)
+            if (!sieve[number])
+                sieve[number] = prime;
+    }
+    long long sum = 0;
+    for (auto divisor:sieve)
+        sum += (long long) divisor;
+    std::cout << sum << std::endl;
+    return 0;
+}
