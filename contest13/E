@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+
+
+int main() {
+    int mod = 1000000007;
+    int n, k;
+    std::cin >> n >> k;
+    long long a_sum = 0, buffer;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> buffer;
+        a_sum += buffer;
+        a_sum %= mod;
+    }
+    if (k == 1) {
+        std::cout << (n * a_sum) % mod << '\n';
+        return 0;
+    }
+    std::vector<long long> pow_x_2(k + 1);
+    for (int x = 0; x < pow_x_2.size(); ++x)
+        pow_x_2[x] = x;
+    std::vector<long long> pow_x_n(pow_x_2.size(), 1);
+    std::vector<long long> inverse_x(pow_x_n);
+    for (int bit = 0; bit < 31; ++bit) {
+        if ((n - 1) & (1 << bit))
+            for (int x = 0; x < pow_x_n.size(); ++x) {
+                pow_x_n[x] *= pow_x_2[x];
+                pow_x_n[x] %= mod;
+            }
+        if ((mod - 2) & (1 << bit))
+            for (int x = 0; x < inverse_x.size(); ++x) {
+                inverse_x[x] *= pow_x_2[x];
+                inverse_x[x] %= mod;
+            }
+        for (int x = 0; x < pow_x_2.size(); ++x) {
+            pow_x_2[x] *= pow_x_2[x];
+            pow_x_2[x] %= mod;
+        }
+    }
+    long long binomial_k_i = 1;
+    long long binomial_k1_i = 1;
+    long long sign = 1, answer = 0, inverse_factorial_k = 1;
+    for (int i = 0; i < k; ++i) {
+        inverse_factorial_k *= inverse_x[i + 1];
+        inverse_factorial_k %= mod;
+        answer += (sign * binomial_k_i * pow_x_n[k - i - 1]);
+        answer += (((sign * binomial_k1_i * pow_x_n[k - i] % mod) * (n + k - 1) % mod) * inverse_x[k]);
+        answer %= mod;
+        sign *= -1;
+        binomial_k_i *= (k - i - 1) * inverse_x[i + 1] % mod;
+        binomial_k_i %= mod;
+        binomial_k1_i *= (k - i) * inverse_x[i + 1] % mod;
+        binomial_k1_i %= mod;
+    }
+    answer *= (inverse_factorial_k * k) % mod;
+    answer %= mod;
+    answer *= a_sum;
+    answer %= mod;
+    if (answer < 0) 
+        answer += mod;
+    std::cout << answer << std::endl;
+    return 0;
+}
