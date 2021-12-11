@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <math.h>
+#include <algorithm>
+
+struct Point {
+    long long x;
+    long long y;
+};
+using SortPoint = std::pair<double, Point>;
+
+bool comp(SortPoint t1, SortPoint t2) {
+    if (t1.first != t2.first)
+        return t1.first < t2.first;
+    if (t1.second.x != t2.second.x)
+        return t1.second.x < t2.second.x;
+    return t1.second.y < t2.second.y;
+}
+
+double get_sin(const Point& O, const Point& P, const Point& R) {
+    Point OP = {P.x - O.x, P.y - O.y};
+    double OP_len = sqrt(OP.x * OP.x + OP.y * OP.y);
+    Point OR = {R.x - O.x, R.y - O.y};
+    double OR_len = sqrt(OR.x * OR.x + OR.y * OR.y);
+    if (OP_len == 0 || OR_len == 0)
+        return 0;
+    return (OP.x * OR.y - OP.y * OR.x) / OP_len / OR_len;
+}
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::vector<SortPoint> vertex_list;
+    int n;
+    std::cin >> n;
+    SortPoint left_down_point = {0, {2000000000, 2000000000}};
+    for (int i = 0; i < n; ++i) {
+        vertex_list.push_back({0, {0, 0}});
+        std::cin >> vertex_list.back().second.x >> vertex_list.back().second.y;
+        if (comp(vertex_list.back(), left_down_point))
+            left_down_point = vertex_list.back();
+    }
+    Point P = {left_down_point.second.x, left_down_point.second.y - 1};
+    for (auto& vertex:vertex_list) {
+        vertex.first = get_sin(left_down_point.second, P, vertex.second);
+        if (vertex.second.y > left_down_point.second.y)
+            vertex.first = 2 - vertex.first;
+    }
+    std::sort(vertex_list.begin(), vertex_list.end(), comp);
+    vertex_list.push_back(left_down_point);
+    std::vector<Point> convex_hull;
+    for (int vertex = 0; vertex < vertex_list.size(); ++vertex) {
+        while (convex_hull.size() >= 2 &&
+               get_sin(convex_hull.back(), vertex_list[vertex].second, convex_hull[convex_hull.size() - 2]) <= 0)
+            convex_hull.pop_back();
+        convex_hull.push_back(vertex_list[vertex].second);
+    }
+    convex_hull.pop_back();
+    std::cout << convex_hull.size() << '\n';
+    for (auto vertex:convex_hull) {
+        std::cout << vertex.x << ' ' << vertex.y << std::endl;
+    }
+    return 0;
+}
