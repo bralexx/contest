@@ -1,27 +1,12 @@
 #include <iostream>
 #include <vector>
 
+#define MAXBIT 31
+#define mod 1000000007
 
-int main() {
-    int mod = 1000000007;
-    int n, k;
-    std::cin >> n >> k;
-    long long a_sum = 0, buffer;
-    for (int i = 0; i < n; ++i) {
-        std::cin >> buffer;
-        a_sum += buffer;
-        a_sum %= mod;
-    }
-    if (k == 1) {
-        std::cout << (n * a_sum) % mod << '\n';
-        return 0;
-    }
-    std::vector<long long> pow_x_2(k + 1);
-    for (int x = 0; x < pow_x_2.size(); ++x)
-        pow_x_2[x] = x;
-    std::vector<long long> pow_x_n(pow_x_2.size(), 1);
-    std::vector<long long> inverse_x(pow_x_n);
-    for (int bit = 0; bit < 31; ++bit) {
+void pre_calc(std::vector<long long>& pow_x_2, std::vector<long long>& pow_x_n,
+              std::vector<long long>& inverse_x, int n) {
+    for (int bit = 0; bit < MAXBIT; ++bit) {
         if ((n - 1) & (1 << bit))
             for (int x = 0; x < pow_x_n.size(); ++x) {
                 pow_x_n[x] *= pow_x_2[x];
@@ -37,6 +22,15 @@ int main() {
             pow_x_2[x] %= mod;
         }
     }
+}
+
+long long solve(int n, int k, long long a_sum) {
+    std::vector<long long> pow_x_2(k + 1);
+    for (int x = 0; x < pow_x_2.size(); ++x)
+        pow_x_2[x] = x;
+    std::vector<long long> pow_x_n(pow_x_2.size(), 1);
+    std::vector<long long> inverse_x(pow_x_n);
+    pre_calc(pow_x_2, pow_x_n, inverse_x, n);
     long long binomial_k_i = 1;
     long long binomial_k1_i = 1;
     long long sign = 1, answer = 0, inverse_factorial_k = 1;
@@ -56,8 +50,23 @@ int main() {
     answer %= mod;
     answer *= a_sum;
     answer %= mod;
-    if (answer < 0) 
+    if (answer < 0)
         answer += mod;
-    std::cout << answer << std::endl;
+}
+
+int main() {
+    int n, k;
+    std::cin >> n >> k;
+    long long a_sum = 0, buffer;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> buffer;
+        a_sum += buffer;
+        a_sum %= mod;
+    }
+    if (k == 1) {
+        std::cout << (n * a_sum) % mod << '\n';
+        return 0;
+    }
+    std::cout << solve(n, k, a_sum) << std::endl;
     return 0;
 }
