@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
 
-int main() {
-    int n;
-    std::cin >> n;
+long long solve(int n) {
     std::vector<int> sieve(n + 1, 0);
     for (int prime = 2; prime <= n; ++prime) {
         while (sieve[prime] != 0)
@@ -15,6 +13,12 @@ int main() {
     long long sum = 0;
     for (auto divisor:sieve)
         sum += (long long) divisor;
-    std::cout << sum << std::endl;
+    return sum;
+}
+
+int main() {
+    int n;
+    std::cin >> n;
+    std::cout << solve(n) << std::endl;
     return 0;
 }
