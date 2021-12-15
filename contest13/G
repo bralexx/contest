@@ -28,21 +28,10 @@ void fft(std::vector<std::complex<double>>& poly_coef, bool inverse) {
     }
 }
 
-
-int main() {
-    int degree1, degree2;
-    std::cin >> degree1;
-    ++degree1;
-    std::vector<std::complex<double>> poly1(degree1);
-    for (auto it = poly1.rbegin(); it != poly1.rend(); ++it)
-        std::cin >> *it;
-    std::cin >> degree2;
-    ++degree2;
-    std::vector<std::complex<double>> poly2(degree2);
-    for (auto it = poly2.rbegin(); it != poly2.rend(); ++it)
-        std::cin >> *it;
+std::vector<std::complex<double>> poly_multiplication(std::vector<std::complex<double>> poly1,
+                                                      std::vector<std::complex<double>> poly2) {
     int fft_degree = 1;
-    while (std::max(degree1, degree2) > fft_degree)
+    while (std::max(poly1.size(), poly2.size()) > fft_degree)
         fft_degree <<= 1;
     fft_degree <<= 1;
     poly1.resize(fft_degree);
@@ -55,8 +44,22 @@ int main() {
     fft(poly1, true);
     while (round(poly1.back().real()) == 0)
         poly1.pop_back();
-    std::cout << poly1.size() - 1 << ' ';
+    return poly1;
+}
+
+int main() {
+    int degree1, degree2;
+    std::cin >> degree1;
+    std::vector<std::complex<double>> poly1(degree1 + 1);
     for (auto it = poly1.rbegin(); it != poly1.rend(); ++it)
+        std::cin >> *it;
+    std::cin >> degree2;
+    std::vector<std::complex<double>> poly2(degree2 + 1);
+    for (auto it = poly2.rbegin(); it != poly2.rend(); ++it)
+        std::cin >> *it;
+    auto answer = poly_multiplication(poly1, poly2);
+    std::cout << answer.size() - 1 << ' ';
+    for (auto it = answer.rbegin(); it != answer.rend(); ++it)
         std::cout << (int) round(it->real()) << ' ';
     return 0;
 }
