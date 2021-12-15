@@ -3,6 +3,7 @@
 #include <math.h>
 #include <algorithm>
 
+#define INF 2000000000
 struct Point {
     long long x;
     long long y;
@@ -27,13 +28,11 @@ double get_sin(const Point& O, const Point& P, const Point& R) {
     return (OP.x * OR.y - OP.y * OR.x) / OP_len / OR_len;
 }
 
-int main() {
-    std::ios_base::sync_with_stdio(false);
-    std::cin.tie();
+std::vector<Point> get_convex_hull() {
     std::vector<SortPoint> vertex_list;
     int n;
     std::cin >> n;
-    SortPoint left_down_point = {0, {2000000000, 2000000000}};
+    SortPoint left_down_point = {0, {INF, INF}};
     for (int i = 0; i < n; ++i) {
         vertex_list.push_back({0, {0, 0}});
         std::cin >> vertex_list.back().second.x >> vertex_list.back().second.y;
@@ -56,7 +55,14 @@ int main() {
         convex_hull.push_back(vertex_list[vertex].second);
     }
     convex_hull.pop_back();
-    std::cout << convex_hull.size() << '\n';
+    return convex_hull;
+}
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie();
+    std::vector<Point> convex_hull = get_convex_hull();
+    std::cout << convex_hull.size() << std::endl;
     for (auto vertex:convex_hull) {
         std::cout << vertex.x << ' ' << vertex.y << std::endl;
     }
