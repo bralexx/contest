@@ -1,0 +1,24 @@
+#include <iostream>
+#include <vector>
+
+long long solve(int n) {
+    std::vector<int> sieve(n + 1, 0);
+    for (int prime = 2; prime <= n; ++prime) {
+        while (sieve[prime] != 0)
+            ++prime;
+        for (int number = prime * 2; number <= n; number += prime)
+            if (!sieve[number])
+                sieve[number] = prime;
+    }
+    long long sum = 0;
+    for (auto divisor:sieve)
+        sum += (long long) divisor;
+    return sum;
+}
+
+int main() {
+    int n;
+    std::cin >> n;
+    std::cout << solve(n) << std::endl;
+    return 0;
+}
