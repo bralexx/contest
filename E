@@ -26,9 +26,7 @@ struct Point {
     }
 };
 
-int main() {
-    int n;
-    std::cin >> n;
+bool scan_line(int n) {
     Point point, point_buffer;
     std::cin >> point.x >> point.y;
     std::vector<Point> vertex_list;
@@ -54,12 +52,12 @@ int main() {
                     (vertex_list[i % n].y - vertex_list[(i - 1) % n].y) / x_diff * point.x + vertex_list[i % n].y;
             intersection_y -= (vertex_list[i % n].y - vertex_list[(i - 1) % n].y) / x_diff * vertex_list[i % n].x;
             if (vertex_list[i % n].x == point.x) {
-                if (vertex_list[(i - 1) % n].x > point.x) 
+                if (vertex_list[(i - 1) % n].x > point.x)
                     intersections.push_back(vertex_list[i % n].y);
                 continue;
             }
             if (vertex_list[(i - 1) % n].x == point.x) {
-                if (vertex_list[i % n].x > point.x) 
+                if (vertex_list[i % n].x > point.x)
                     intersections.push_back(vertex_list[(i - 1) % n].y);
                 continue;
             }
@@ -78,6 +76,13 @@ int main() {
         if (in > point.y)
             ++num_of_intersections;
     }
-    std::cout << (num_of_intersections % 2 ? "YES" : "NO") << std::endl;
+    return num_of_intersections % 2;
+}
+
+int main() {
+    int n;
+    std::cin >> n;
+    bool inside = scan_line(n);
+    std::cout << (inside ? "YES" : "NO") << std::endl;
     return 0;
 }
