@@ -1,0 +1,88 @@
+#include <iostream>
+
+#include <iostream>
+#include <utility>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+
+struct Point {
+    long double x;
+    long double y;
+
+    Point(const long double& x0 = 0, const long double& y0 = 0) : x(x0), y(y0) {}
+
+    Point& operator+=(const Point& t2) {
+        x += t2.x;
+        y += t2.y;
+        return *this;
+    }
+
+    Point operator+(const Point& t2) const {
+        Point t = *this;
+        t += t2;
+        return t;
+    }
+};
+
+bool scan_line(int n, Point point, const std::vector<Point>& vertex_list) {
+    std::vector<double> intersections;
+    for (int i = 0; i <= n; ++i) {
+        if (i > 0) {
+            if (vertex_list[i % n].x == vertex_list[(i - 1) % n].x) {
+                if (vertex_list[i % n].x == point.x) {
+                    if (vertex_list[i % n].y > point.y == vertex_list[i % n].y < point.y ||
+                        (vertex_list[i % n].y == point.y || vertex_list[i % n].y == point.y)) {
+                        std::cout << "YES\n";
+                        return 0;
+                    }
+                }
+                continue;
+            }
+            double x_diff = vertex_list[i % n].x - vertex_list[(i - 1) % n].x;
+            double intersection_y =
+                    (vertex_list[i % n].y - vertex_list[(i - 1) % n].y) / x_diff * point.x + vertex_list[i % n].y;
+            intersection_y -= (vertex_list[i % n].y - vertex_list[(i - 1) % n].y) / x_diff * vertex_list[i % n].x;
+            if (vertex_list[i % n].x == point.x) {
+                if (vertex_list[(i - 1) % n].x > point.x)
+                    intersections.push_back(vertex_list[i % n].y);
+                continue;
+            }
+            if (vertex_list[(i - 1) % n].x == point.x) {
+                if (vertex_list[i % n].x > point.x)
+                    intersections.push_back(vertex_list[(i - 1) % n].y);
+                continue;
+            }
+            if ((vertex_list[i % n].y > intersection_y == vertex_list[(i - 1) % n].y < intersection_y) &&
+                (vertex_list[i % n].x > point.x == vertex_list[(i - 1) % n].x < point.x))
+                intersections.push_back(intersection_y);
+        }
+    }
+
+    int num_of_intersections = 0;
+    for (auto& in:intersections) {
+        if (in == point.y) {
+            std::cout << "YES\n";
+            return 0;
+        }
+        if (in > point.y)
+            ++num_of_intersections;
+    }
+    return num_of_intersections % 2;
+}
+
+int main() {
+    Point point_buffer, point;
+    int n;
+    std::cin >> n;
+    std::cin >> point.x >> point.y;
+    std::vector<Point> vertex_list;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> point_buffer.x >> point_buffer.y;
+        vertex_list.push_back({point_buffer.x, point_buffer.y});
+    }
+    bool inside = scan_line(n, point, vertex_list);
+    std::cout << (inside ? "YES" : "NO") << std::endl;
+    return 0;
+}
