@@ -26,16 +26,9 @@ struct Point {
     }
 };
 
-bool scan_line(int n) {
-    Point point, point_buffer;
-    std::cin >> point.x >> point.y;
-    std::vector<Point> vertex_list;
+bool scan_line(int n, Point point, const std::vector<Point>& vertex_list) {
     std::vector<double> intersections;
     for (int i = 0; i <= n; ++i) {
-        if (i != n) {
-            std::cin >> point_buffer.x >> point_buffer.y;
-            vertex_list.push_back({point_buffer.x, point_buffer.y});
-        }
         if (i > 0) {
             if (vertex_list[i % n].x == vertex_list[(i - 1) % n].x) {
                 if (vertex_list[i % n].x == point.x) {
@@ -80,9 +73,16 @@ bool scan_line(int n) {
 }
 
 int main() {
+    Point point_buffer, point;
     int n;
     std::cin >> n;
-    bool inside = scan_line(n);
+    std::cin >> point.x >> point.y;
+    std::vector<Point> vertex_list;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> point_buffer.x >> point_buffer.y;
+        vertex_list.push_back({point_buffer.x, point_buffer.y});
+    }
+    bool inside = scan_line(n, point, vertex_list);
     std::cout << (inside ? "YES" : "NO") << std::endl;
     return 0;
 }
